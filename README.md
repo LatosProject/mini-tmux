@@ -1,3 +1,2 @@
 # mini-tmux
-# mini-tmux
-# mini-tmux
+一个极简版的终端复用器，用来在一个终端里同时管理和控制多个子 shell 会话。
