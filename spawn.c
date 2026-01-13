@@ -5,8 +5,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <termios.h>
+extern int slave_fd;
+extern void sigwinch_handler();
 
-pid_t spawn_child(char *slave_name)
+pid_t spawn_child(char *slave_name, struct winsize *ws)
 {
     pid_t pid = fork();
     if (pid < 0)
@@ -18,8 +21,14 @@ pid_t spawn_child(char *slave_name)
     {
         char *args[] = {"/bin/bash", NULL};
         setsid();
-        int slave_fd = open(slave_name, O_RDWR);
+
+        // slave_fd = open(slave_name, O_RDWR);
+
+        // 把 slave 设为子进程的控制终端
         ioctl(slave_fd, TIOCSCTTY, 0);
+
+        // 终端尺寸初始化
+        sigwinch_handler();
 
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);

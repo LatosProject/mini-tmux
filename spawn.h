@@ -1,2 +1,4 @@
 #include <sys/types.h>
-pid_t spawn_child(char *slave_name);
+#include <sys/ioctl.h>
+
+pid_t spawn_child(char *slave_name, struct winsize *ws);

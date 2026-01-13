@@ -8,22 +8,44 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+
+int master_fd;
+int slave_fd;
+struct winsize ws;
+
+void sigwinch_handler(int sig)
+{
+    // Read size
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
+    {
+        return;
+    }
+    // Write size
+    ioctl(slave_fd, TIOCSWINSZ, &ws);
+}
 
 int main()
 {
-    int master_fd = posix_openpt(O_RDWR);
+    master_fd = posix_openpt(O_RDWR);
     if (master_fd == -1)
     {
         perror("opsix_openpt");
         return -1;
     }
-    // Unlock the slave device.
+    // 解锁 slave 设备
     grantpt(master_fd);
     unlockpt(master_fd);
 
     char *slave_name = ptsname(master_fd);
 
-    pid_t slave_pid = spawn_child(slave_name);
+    slave_fd = open(slave_name, O_RDWR);
+    pid_t slave_pid = spawn_child(slave_name, &ws);
+
+    signal(SIGWINCH, sigwinch_handler);
+
     printf("Spawned child process with PID: %d\n", slave_pid);
     while (1)
     {
@@ -36,7 +58,7 @@ int main()
         }
         fd_set rfds;
 
-        // Input and output
+        // 输入和输出
         int maxfd;
         char buff[4096];
         FD_ZERO(&rfds);
@@ -47,6 +69,11 @@ int main()
 
         if (select(maxfd + 1, &rfds, NULL, NULL, NULL) < 0)
         {
+            if (errno == EINTR)
+            {
+                continue;
+            }
+            // 当进程接收到信号时，会打断正在堵塞的 select()
             perror("select");
             break;
         }
