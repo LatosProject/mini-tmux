@@ -30,6 +30,11 @@ pid_t spawn_child(char *slave_name, struct winsize *ws)
 
         setenv("TERM", "screen-256color", 1);
 
+        struct termios ts;
+        tcgetattr(slave_fd, &ts);
+        ts.c_lflag &= ~ECHO; // 关闭回显
+        tcsetattr(slave_fd, TCSANOW, &ts);
+
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);
         dup2(slave_fd, STDERR_FILENO);
