@@ -7,7 +7,6 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 extern int slave_fd;
-extern void sigwinch_handler();
 
 pid_t spawn_child(char *slave_name, struct winsize *ws)
 {
@@ -26,9 +25,6 @@ pid_t spawn_child(char *slave_name, struct winsize *ws)
 
         // 把 slave 设为子进程的控制终端
         ioctl(slave_fd, TIOCSCTTY, 0);
-
-        // 终端尺寸初始化
-        sigwinch_handler();
 
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);

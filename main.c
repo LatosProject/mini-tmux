@@ -42,9 +42,21 @@ int main()
     char *slave_name = ptsname(master_fd);
 
     slave_fd = open(slave_name, O_RDWR);
+
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
+    {
+        return -1;
+    }
+    ioctl(slave_fd, TIOCSWINSZ, &ws);
+
     pid_t slave_pid = spawn_child(slave_name, &ws);
 
-    signal(SIGWINCH, sigwinch_handler);
+    struct sigaction sa;
+    sa.sa_handler = sigwinch_handler;
+    sa.sa_flags = SA_RESTART;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGWINCH, &sa, NULL);
+    // signal(SIGWINCH, sigwinch_handler); <- 只会调用一次
 
     printf("Spawned child process with PID: %d\n", slave_pid);
     while (1)
