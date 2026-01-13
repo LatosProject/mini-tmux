@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 int main()
 {
@@ -33,10 +34,42 @@ int main()
             perror("waitpid failed");
             exit(1);
         }
-        // fd_set rfds;
-        // FD_ZERO(&rfds);
-        // FD_SET(master_fd, &rfds);
-        sleep(1);
+        fd_set rfds;
+
+        // Input and output
+        int maxfd;
+        char buff[4096];
+        FD_ZERO(&rfds);
+        FD_SET(master_fd, &rfds);
+        FD_SET(STDIN_FILENO, &rfds);
+
+        maxfd = master_fd > STDIN_FILENO ? master_fd : STDIN_FILENO;
+
+        if (select(maxfd + 1, &rfds, NULL, NULL, NULL) < 0)
+        {
+            perror("select");
+            break;
+        }
+
+        if (FD_ISSET(master_fd, &rfds))
+        {
+            ssize_t n = read(master_fd, buff, sizeof(buff));
+            if (n <= 0)
+            {
+                break;
+            }
+            write(STDOUT_FILENO, buff, n);
+        }
+
+        if (FD_ISSET(STDIN_FILENO, &rfds))
+        {
+            ssize_t n = read(STDIN_FILENO, buff, sizeof(buff));
+            if (n <= 0)
+            {
+                break;
+            }
+            write(master_fd, buff, n);
+        }
     }
     return 0;
 }

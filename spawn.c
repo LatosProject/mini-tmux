@@ -24,7 +24,7 @@ pid_t spawn_child(char *slave_name)
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);
         dup2(slave_fd, STDERR_FILENO);
-
+        close(slave_fd);
         execve(args[0], args, NULL);
         perror("Execve failed");
         _exit(1); // Use _exit to avoid flushing stdio buffers again
