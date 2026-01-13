@@ -6,7 +6,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <termios.h>
 extern int slave_fd;
+extern char **environ;
 
 pid_t spawn_child(char *slave_name, struct winsize *ws)
 {
@@ -18,7 +20,7 @@ pid_t spawn_child(char *slave_name, struct winsize *ws)
     }
     else if (pid == 0)
     {
-        char *args[] = {"/bin/bash", NULL};
+        char *args[] = {"/bin/bash", "-i", NULL};
         setsid();
 
         // slave_fd = open(slave_name, O_RDWR);
@@ -26,11 +28,13 @@ pid_t spawn_child(char *slave_name, struct winsize *ws)
         // 把 slave 设为子进程的控制终端
         ioctl(slave_fd, TIOCSCTTY, 0);
 
+        setenv("TERM", "screen-256color", 1);
+
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);
         dup2(slave_fd, STDERR_FILENO);
         close(slave_fd);
-        execve(args[0], args, NULL);
+        execve(args[0], args, environ);
         perror("Execve failed");
         _exit(1); // Use _exit to avoid flushing stdio buffers again
     }

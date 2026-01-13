@@ -14,6 +14,8 @@
 
 int master_fd;
 int slave_fd;
+int child_exited;
+pid_t slave_pid;
 struct winsize ws;
 
 void sigwinch_handler(int sig)
@@ -25,6 +27,16 @@ void sigwinch_handler(int sig)
     }
     // Write size
     ioctl(slave_fd, TIOCSWINSZ, &ws);
+}
+
+void sigchld_handler(int sig)
+{
+    int ret = waitpid(slave_pid, NULL, WNOHANG);
+    if (ret > 0)
+    {
+        child_exited = 1;
+        printf("Child exited with PID: %d \n", ret);
+    }
 }
 
 int main()
@@ -49,25 +61,37 @@ int main()
     }
     ioctl(slave_fd, TIOCSWINSZ, &ws);
 
-    pid_t slave_pid = spawn_child(slave_name, &ws);
+    slave_pid = spawn_child(slave_name, &ws);
 
-    struct sigaction sa;
-    sa.sa_handler = sigwinch_handler;
-    sa.sa_flags = SA_RESTART;
-    sigemptyset(&sa.sa_mask);
-    sigaction(SIGWINCH, &sa, NULL);
-    // signal(SIGWINCH, sigwinch_handler); <- 只会调用一次
+    // 终端窗口尺寸更新
+    struct sigaction sa_winch;
+    sa_winch.sa_handler = sigwinch_handler;
+    sa_winch.sa_flags = SA_RESTART;
+    sigemptyset(&sa_winch.sa_mask);
+    sigaction(SIGWINCH, &sa_winch, NULL);
+
+    // 回收子进程
+    struct sigaction sa_chld;
+    sa_chld.sa_handler = sigchld_handler;
+    sa_chld.sa_flags = SA_RESTART;
+    sigemptyset(&sa_chld.sa_mask);
+    sigaction(SIGCHLD, &sa_chld, NULL);
+    // signal(SIGWINCH, sigwinch_handler);
 
     printf("Spawned child process with PID: %d\n", slave_pid);
     while (1)
     {
-        int status = 0;
-        pid_t return_id = waitpid(slave_pid, &status, WNOHANG);
-        if (return_id < 0)
+        if (child_exited)
         {
-            perror("waitpid failed");
-            exit(1);
+            break;
         }
+        // int status = 0;
+        // pid_t return_id = waitpid(slave_pid, &status, WNOHANG);
+        // if (return_id < 0)
+        // {
+        //     perror("waitpid failed");
+        //     exit(1);
+        // }
         fd_set rfds;
 
         // 输入和输出
