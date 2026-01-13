@@ -82,16 +82,7 @@ int main()
     while (1)
     {
         if (child_exited)
-        {
             break;
-        }
-        // int status = 0;
-        // pid_t return_id = waitpid(slave_pid, &status, WNOHANG);
-        // if (return_id < 0)
-        // {
-        //     perror("waitpid failed");
-        //     exit(1);
-        // }
         fd_set rfds;
 
         // 输入和输出
