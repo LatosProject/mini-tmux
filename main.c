@@ -78,6 +78,12 @@ int main()
     sigaction(SIGCHLD, &sa_chld, NULL);
     // signal(SIGWINCH, sigwinch_handler);
 
+    // 忽略信号
+    struct sigaction sa;
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = SIG_IGN;
+    sigaction(SIGINT, &sa, NULL);
+
     printf("Spawned child process with PID: %d\n", slave_pid);
     while (1)
     {
