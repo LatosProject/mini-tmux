@@ -11,6 +11,7 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <string.h>
 
 int master_fd;
 int slave_fd;
@@ -18,24 +19,30 @@ int child_exited;
 pid_t slave_pid;
 struct winsize ws;
 
-void sigwinch_handler(int sig)
+void signal_handler(int sig)
 {
-    // Read size
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
+    switch (sig)
     {
-        return;
-    }
-    // Write size
-    ioctl(slave_fd, TIOCSWINSZ, &ws);
-}
-
-void sigchld_handler(int sig)
-{
-    int ret = waitpid(slave_pid, NULL, WNOHANG);
-    if (ret > 0)
-    {
-        child_exited = 1;
-        printf("Child exited with PID: %d \n", ret);
+    case SIGINT:
+    case SIGWINCH:
+        // Read size
+        if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
+        {
+            return;
+        }
+        // Write size
+        ioctl(slave_fd, TIOCSWINSZ, &ws);
+        break;
+    case SIGCHLD:
+        int ret = waitpid(slave_pid, NULL, WNOHANG);
+        if (ret > 0)
+        {
+            child_exited = 1;
+            char msg[100] = {0};
+            snprintf(msg, ret, "Child exited with PID: %d", ret);
+            write(STDOUT_FILENO, msg, strlen(msg));
+        }
+        break;
     }
 }
 
@@ -44,7 +51,7 @@ int main()
     master_fd = posix_openpt(O_RDWR);
     if (master_fd == -1)
     {
-        perror("opsix_openpt");
+        perror("posix_openpt");
         return -1;
     }
     // 解锁 slave 设备
@@ -64,25 +71,13 @@ int main()
     slave_pid = spawn_child(slave_name, &ws);
 
     // 终端窗口尺寸更新
-    struct sigaction sa_winch;
-    sa_winch.sa_handler = sigwinch_handler;
-    sa_winch.sa_flags = SA_RESTART;
-    sigemptyset(&sa_winch.sa_mask);
-    sigaction(SIGWINCH, &sa_winch, NULL);
-
-    // 回收子进程
-    struct sigaction sa_chld;
-    sa_chld.sa_handler = sigchld_handler;
-    sa_chld.sa_flags = SA_RESTART;
-    sigemptyset(&sa_chld.sa_mask);
-    sigaction(SIGCHLD, &sa_chld, NULL);
-    // signal(SIGWINCH, sigwinch_handler);
-
-    // 忽略信号
     struct sigaction sa;
+    sa.sa_handler = signal_handler;
     sa.sa_flags = SA_RESTART;
-    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGWINCH, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGCHLD, &sa, NULL);
 
     printf("Spawned child process with PID: %d\n", slave_pid);
     while (1)
