@@ -21,9 +21,11 @@ pid_t spawn_child(char *slave_name, struct winsize *ws)
     else if (pid == 0)
     {
         char *args[] = {"/bin/bash", "-i", NULL};
+
+        // 创建了一个会话
         setsid();
 
-        // slave_fd = open(slave_name, O_RDWR);
+        slave_fd = open(slave_name, O_RDWR);
 
         // 把 slave 设为子进程的控制终端
         ioctl(slave_fd, TIOCSCTTY, 0);
@@ -31,9 +33,8 @@ pid_t spawn_child(char *slave_name, struct winsize *ws)
         setenv("TERM", "screen-256color", 1);
 
         struct termios ts;
-        tcgetattr(slave_fd, &ts);
-        ts.c_lflag &= ~ECHO; // 关闭回显
-        tcsetattr(slave_fd, TCSANOW, &ts);
+
+        tcsetpgrp(slave_fd, getpid()); // 设置前台进程组。这样，终端设备驱动程序就能了解将终端输入和终端产生的信号送到何处。
 
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);

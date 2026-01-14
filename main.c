@@ -18,19 +18,18 @@ int slave_fd;
 int child_exited;
 pid_t slave_pid;
 struct winsize ws;
+struct termios orig_termios;
 
 void signal_handler(int sig)
 {
     switch (sig)
     {
-    case SIGINT:
     case SIGWINCH:
-        // Read size
+        // 设置终端尺寸
         if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
         {
             return;
         }
-        // Write size
         ioctl(slave_fd, TIOCSWINSZ, &ws);
         break;
     case SIGCHLD:
@@ -39,11 +38,21 @@ void signal_handler(int sig)
         {
             child_exited = 1;
             char msg[100] = {0};
-            snprintf(msg, ret, "Child exited with PID: %d", ret);
+            snprintf(msg, ret, "Child exited with PID: %d\n", ret);
             write(STDOUT_FILENO, msg, strlen(msg));
+            tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
         }
         break;
     }
+}
+
+void enable_raw_mode()
+{
+    // 原始终端切换至 raw 模式
+    struct termios raw;
+    tcgetattr(STDIN_FILENO, &raw);
+    raw.c_lflag &= ~(ECHO | ICANON | ISIG); // 关掉回显/ 立即读取 / 禁用SIGINT
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
 int main()
@@ -76,8 +85,11 @@ int main()
     sa.sa_flags = SA_RESTART;
     sigemptyset(&sa.sa_mask);
     sigaction(SIGWINCH, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
     sigaction(SIGCHLD, &sa, NULL);
+    // 原始终端属性备份
+    tcgetattr(STDIN_FILENO, &orig_termios);
+
+    enable_raw_mode();
 
     printf("Spawned child process with PID: %d\n", slave_pid);
     while (1)
