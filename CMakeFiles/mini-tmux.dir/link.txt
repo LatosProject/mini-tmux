@@ -1,0 +1,1 @@
+/usr/bin/cc "CMakeFiles/mini-tmux.dir/main.c.o" "CMakeFiles/mini-tmux.dir/client.c.o" "CMakeFiles/mini-tmux.dir/spawn.c.o" -o mini-tmux 
