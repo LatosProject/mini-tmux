@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE 600
 #include "spawn.h"
+#include "client.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -9,75 +10,58 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 #include <errno.h>
 #include <string.h>
 
-int master_fd;
-int slave_fd;
-int child_exited;
-pid_t slave_pid;
-struct winsize ws;
-struct termios orig_termios;
+volatile sig_atomic_t sigwinch_pending, sigchld_pending = 0; // C 语言唯一保证信号读写安全的类型
+struct client client;
 
+/*
+ * Signal handlers are async and may interrupt execution at arbitrary points.
+ * Only set flags here; handle logic in main loop.
+ */
 void signal_handler(int sig)
 {
     switch (sig)
     {
     case SIGWINCH:
-        // 设置终端尺寸
-        if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
-        {
-            return;
-        }
-        ioctl(slave_fd, TIOCSWINSZ, &ws);
+        sigwinch_pending = 1;
         break;
     case SIGCHLD:
-        int ret = waitpid(slave_pid, NULL, WNOHANG);
+        int ret = waitpid(client.slave_pid, NULL, WNOHANG);
         if (ret > 0)
         {
-            child_exited = 1;
-            char msg[100] = {0};
-            snprintf(msg, ret, "Child exited with PID: %d\n", ret);
-            write(STDOUT_FILENO, msg, strlen(msg));
-            tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+            sigchld_pending = 1;
         }
         break;
     }
 }
 
-void enable_raw_mode()
-{
-    // 原始终端切换至 raw 模式
-    struct termios raw;
-    tcgetattr(STDIN_FILENO, &raw);
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG); // 关掉回显/ 立即读取 / 禁用SIGINT
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
-
 int main()
 {
-    master_fd = posix_openpt(O_RDWR);
-    if (master_fd == -1)
+    client_init(&client);
+    client.master_fd = posix_openpt(O_RDWR);
+    if (client.master_fd == -1)
     {
         perror("posix_openpt");
         return -1;
     }
     // 解锁 slave 设备
-    grantpt(master_fd);
-    unlockpt(master_fd);
+    grantpt(client.master_fd);
+    unlockpt(client.master_fd);
 
-    char *slave_name = ptsname(master_fd);
+    char *slave_name = ptsname(client.master_fd);
+    client.slave_fd = open(slave_name, O_RDWR);
 
-    slave_fd = open(slave_name, O_RDWR);
-
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &client.ws) == -1)
     {
         return -1;
     }
-    ioctl(slave_fd, TIOCSWINSZ, &ws);
 
-    slave_pid = spawn_child(slave_name, &ws);
+    // 第一次初始化窗口尺寸
+    ioctl(client.slave_fd, TIOCSWINSZ, &client.ws);
+
+    client.slave_pid = spawn_child(slave_name, client.slave_fd, &client.ws);
 
     // 终端窗口尺寸更新
     struct sigaction sa;
@@ -86,56 +70,60 @@ int main()
     sigemptyset(&sa.sa_mask);
     sigaction(SIGWINCH, &sa, NULL);
     sigaction(SIGCHLD, &sa, NULL);
-    // 原始终端属性备份
-    tcgetattr(STDIN_FILENO, &orig_termios);
 
-    enable_raw_mode();
-
-    printf("Spawned child process with PID: %d\n", slave_pid);
+    dispatch_event(&client, EV_ENABLE_RAW_MODE);
+    printf("Spawned child process with PID: %d\n", client.slave_pid);
     while (1)
     {
-        if (child_exited)
+        if (client.child_exited)
             break;
         fd_set rfds;
 
         // 输入和输出
         int maxfd;
-        char buff[4096];
         FD_ZERO(&rfds);
-        FD_SET(master_fd, &rfds);
+        FD_SET(client.master_fd, &rfds);
         FD_SET(STDIN_FILENO, &rfds);
 
-        maxfd = master_fd > STDIN_FILENO ? master_fd : STDIN_FILENO;
+        maxfd = client.master_fd > STDIN_FILENO ? client.master_fd : STDIN_FILENO;
 
+        int select_ok = 1;
         if (select(maxfd + 1, &rfds, NULL, NULL, NULL) < 0)
         {
-            if (errno == EINTR)
+            // 防止收到信号后中断 fd
+            if (errno != EINTR)
             {
-                continue;
-            }
-            // 当进程接收到信号时，会打断正在堵塞的 select()
-            perror("select");
-            break;
-        }
-
-        if (FD_ISSET(master_fd, &rfds))
-        {
-            ssize_t n = read(master_fd, buff, sizeof(buff));
-            if (n <= 0)
-            {
+                perror("select");
                 break;
             }
-            write(STDOUT_FILENO, buff, n);
+            // fd 检查完毕
+            select_ok = 0;
         }
 
-        if (FD_ISSET(STDIN_FILENO, &rfds))
+        if (sigwinch_pending)
         {
-            ssize_t n = read(STDIN_FILENO, buff, sizeof(buff));
-            if (n <= 0)
+            sigwinch_pending = 0;
+            dispatch_event(&client, EV_WINCH);
+        }
+
+        if (sigchld_pending)
+        {
+            sigchld_pending = 0;
+            dispatch_event(&client, EV_CHLD_EXIT);
+        }
+
+        // 只有 select 成功时才检查 fd
+        if (select_ok)
+        {
+            if (FD_ISSET(client.master_fd, &rfds))
             {
-                break;
+                dispatch_event(&client, EV_PTY_READ);
             }
-            write(master_fd, buff, n);
+
+            if (FD_ISSET(STDIN_FILENO, &rfds))
+            {
+                dispatch_event(&client, EV_STDIN_READ);
+            }
         }
     }
     return 0;

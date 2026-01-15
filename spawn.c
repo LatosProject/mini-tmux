@@ -1,3 +1,4 @@
+#include "client.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -7,10 +8,9 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <termios.h>
-extern int slave_fd;
 extern char **environ;
 
-pid_t spawn_child(char *slave_name, struct winsize *ws)
+pid_t spawn_child(char *slave_name, int slave_fd, struct winsize *ws)
 {
     pid_t pid = fork();
     if (pid < 0)
