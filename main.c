@@ -27,6 +27,7 @@ void signal_handler(int sig)
     case SIGWINCH:
         sigwinch_pending = 1;
         break;
+    // 回收子进程
     case SIGCHLD:
         int ret = waitpid(client.slave_pid, NULL, WNOHANG);
         if (ret > 0)
@@ -93,6 +94,7 @@ int main()
             // 防止收到信号后中断 fd
             if (errno != EINTR)
             {
+                dispatch_event(&client, EV_INTERRUPT);
                 perror("select");
                 break;
             }

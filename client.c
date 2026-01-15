@@ -9,13 +9,16 @@
 #include <fcntl.h>
 
 static const state_transition table[] = {
-    {ST_BOOT, EV_ENABLE_RAW_MODE, ST_RUNNING, act_enbale_raw_mode},
+    {ST_BOOT, EV_ENABLE_RAW_MODE, ST_RUNNING, act_enable_raw_mode},
     {ST_RUNNING, EV_WINCH, ST_RUNNING, act_resize},
     {ST_RUNNING, EV_CHLD_EXIT, ST_EXITING, act_child_exit},
     {ST_RUNNING, EV_PTY_READ, ST_RUNNING, act_pty_read},
     {ST_RUNNING, EV_STDIN_READ, ST_RUNNING, act_stdin_read},
     {ST_EXITING, EV_STDIN_READ, ST_EXITING, NULL},
-    {ST_EXITING, EV_PTY_READ, ST_EXITING, NULL}};
+    {ST_EXITING, EV_PTY_READ, ST_EXITING, NULL},
+    {ST_RUNNING, EV_EOF_PTY, ST_EXITING, NULL},
+    {ST_RUNNING, EV_EOF_STDIN, ST_EXITING, NULL},
+    {ST_RUNNING, EV_INTERRUPT, ST_EXITING, NULL}};
 
 #define NTRANS (sizeof(table) / sizeof(table[0]))
 
@@ -59,7 +62,7 @@ void act_child_exit(struct client *c, client_event ev)
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
 }
 
-void act_enbale_raw_mode(struct client *c, client_event ev)
+void act_enable_raw_mode(struct client *c, client_event ev)
 {
     // 原始终端切换至 raw 模式
     tcgetattr(STDIN_FILENO, &(c->raw));
@@ -73,6 +76,7 @@ void act_pty_read(struct client *c, client_event ev)
     ssize_t n = read(c->master_fd, buff, sizeof(buff));
     if (n <= 0)
     {
+        dispatch_event(&c, EV_EOF_PTY);
         return;
     }
     write(STDOUT_FILENO, buff, n);
@@ -84,6 +88,7 @@ void act_stdin_read(struct client *c, client_event ev)
     ssize_t n = read(STDIN_FILENO, buff, sizeof(buff));
     if (n <= 0)
     {
+        dispatch_event(&c, EV_EOF_STDIN);
         return;
     }
     write(c->master_fd, buff, n);

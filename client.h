@@ -47,6 +47,6 @@ void client_init(struct client *c);
 void dispatch_event(struct client *c, client_event ev);
 void act_resize(struct client *C, client_event ev);
 void act_child_exit(struct client *C, client_event ev);
-void act_enbale_raw_mode(struct client *C, client_event ev);
+void act_enable_raw_mode(struct client *C, client_event ev);
 void act_pty_read(struct client *c, client_event ev);
 void act_stdin_read(struct client *c, client_event ev);
