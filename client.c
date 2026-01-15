@@ -76,7 +76,7 @@ void act_pty_read(struct client *c, client_event ev)
     ssize_t n = read(c->master_fd, buff, sizeof(buff));
     if (n <= 0)
     {
-        dispatch_event(&c, EV_EOF_PTY);
+        dispatch_event(c, EV_EOF_PTY);
         return;
     }
     write(STDOUT_FILENO, buff, n);
@@ -88,7 +88,7 @@ void act_stdin_read(struct client *c, client_event ev)
     ssize_t n = read(STDIN_FILENO, buff, sizeof(buff));
     if (n <= 0)
     {
-        dispatch_event(&c, EV_EOF_STDIN);
+        dispatch_event(c, EV_EOF_STDIN);
         return;
     }
     write(c->master_fd, buff, n);
