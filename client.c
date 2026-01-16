@@ -49,7 +49,7 @@ void act_resize(struct client *c, client_event ev)
     {
         return;
     }
-    ioctl(c->slave_fd, TIOCSWINSZ, &(c->ws));
+    ioctl(c->master_fd, TIOCSWINSZ, &(c->ws));
     return;
 }
 

@@ -5,6 +5,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/mini-tmux.dir/main.c.o.d"
   "CMakeFiles/mini-tmux.dir/spawn.c.o"
   "CMakeFiles/mini-tmux.dir/spawn.c.o.d"
+  "CMakeFiles/mini-tmux.dir/util.c.o"
+  "CMakeFiles/mini-tmux.dir/util.c.o.d"
   "mini-tmux"
   "mini-tmux.pdb"
 )

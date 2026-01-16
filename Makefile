@@ -201,6 +201,30 @@ spawn.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/spawn.c.s
 .PHONY : spawn.c.s
 
+util.o: util.c.o
+.PHONY : util.o
+
+# target to build an object file
+util.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.o
+.PHONY : util.c.o
+
+util.i: util.c.i
+.PHONY : util.i
+
+# target to preprocess a source file
+util.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.i
+.PHONY : util.c.i
+
+util.s: util.c.s
+.PHONY : util.s
+
+# target to generate assembly for a file
+util.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.s
+.PHONY : util.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -219,6 +243,9 @@ help:
 	@echo "... spawn.o"
 	@echo "... spawn.i"
 	@echo "... spawn.s"
+	@echo "... util.o"
+	@echo "... util.i"
+	@echo "... util.s"
 .PHONY : help
 
 

@@ -1,8 +1,9 @@
 #include "client.h"
-#include "util.c"
+#include "util.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -10,7 +11,8 @@
 #include <unistd.h>
 extern char **environ;
 
-pid_t spawn_child(char *slave_name, int slave_fd, struct winsize *ws) {
+pid_t spawn_child(struct client *c) {
+
   pid_t pid = fork();
   if (pid < 0) {
     perror("Fork failed");
@@ -22,23 +24,35 @@ pid_t spawn_child(char *slave_name, int slave_fd, struct winsize *ws) {
     // 创建了一个会话
     setsid();
 
-    slave_fd = open(slave_name, O_RDWR);
-
+    c->slave_fd = open(*&c->slave_name, O_RDWR);
+    if (c->slave_fd < 0) {
+      perror("open slave pty failed");
+      _exit(1);
+    }
     // 把 slave 设为子进程的控制终端
-    ioctl(slave_fd, TIOCSCTTY, 0);
+    ioctl(c->slave_fd, TIOCSCTTY, 0);
 
     setenv("TERM", "screen-256color", 1);
 
+    char buf[100];
+    snprintf(buf, sizeof(buf), "%d", c->slave_pid);
+
+    if (client_check_nested()) {
+      char buff[100] = "sessions should be nested with care\n";
+      write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
+      _exit(-1);
+    }
+    setenv("MINI_TMUX", buf, 1);
     struct termios ts;
 
     tcsetpgrp(
-        slave_fd,
+        c->slave_fd,
         getpid()); // 设置前台进程组。这样，终端设备驱动程序就能了解将终端输入和终端产生的信号送到何处。
 
-    dup2(slave_fd, STDIN_FILENO);
-    dup2(slave_fd, STDOUT_FILENO);
-    dup2(slave_fd, STDERR_FILENO);
-    close(slave_fd);
+    dup2(c->slave_fd, STDIN_FILENO);
+    dup2(c->slave_fd, STDOUT_FILENO);
+    dup2(c->slave_fd, STDERR_FILENO);
+    close(c->slave_fd);
     execve(args[0], args, environ);
     perror("Execve failed");
     _exit(1); // Use _exit to avoid flushing stdio buffers again

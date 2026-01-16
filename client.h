@@ -32,6 +32,8 @@ struct client
     struct termios orig_termios;
     int child_exited;
     struct termios raw;
+    char *slave_name;
+    struct environ		*environ;
 };
 
 typedef void (*action_fn)(struct client *c, client_event ev);
