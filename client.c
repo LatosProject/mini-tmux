@@ -118,8 +118,8 @@ void client_init(struct client *c) {
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(c->ws));
 }
 
-void client_loop(struct client *c){
-    while (1) {
+void client_loop(struct client *c) {
+  while (1) {
     if (c->child_exited)
       break;
     fd_set rfds;
@@ -165,7 +165,6 @@ void client_loop(struct client *c){
       }
     }
   }
-
 }
 int client_main(struct client *c) {
   c->master_fd = posix_openpt(O_RDWR);
@@ -195,7 +194,10 @@ int client_main(struct client *c) {
   sigaction(SIGCHLD, &sa, NULL);
 
   dispatch_event(c, EV_ENABLE_RAW_MODE);
-  printf("Spawned child process with PID: %d\n", c->slave_pid);
+
+  char msg[100] = {0};
+  snprintf(msg, sizeof(msg), "Spawned child process with PID: %d\n", c->slave_pid);
+  write(STDOUT_FILENO, msg, strlen(msg));
   client_loop(c);
   return 0;
 }
