@@ -97,4 +97,6 @@ CMakeFiles/mini-tmux.dir/spawn.c.o: /home/latos/project/mini-tmux/spawn.c \
  /usr/include/x86_64-linux-gnu/bits/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h \
- /usr/include/x86_64-linux-gnu/bits/struct_stat.h
+ /usr/include/x86_64-linux-gnu/bits/struct_stat.h \
+ /home/latos/project/mini-tmux/util.c /usr/include/pwd.h \
+ /usr/include/paths.h
