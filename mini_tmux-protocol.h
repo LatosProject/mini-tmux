@@ -1,3 +1,4 @@
+#pragma once
 #include <stddef.h>
 #define PROTOCOL_VERSION 0
 

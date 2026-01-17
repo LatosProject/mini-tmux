@@ -339,6 +339,7 @@ CMakeFiles/mini-tmux.dir/server.c.o: server.c \
   /usr/include/asm-generic/sockios.h \
   /usr/include/endian.h \
   /usr/include/errno.h \
+  /usr/include/fcntl.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
   /usr/include/linux/errno.h \
@@ -365,6 +366,8 @@ CMakeFiles/mini-tmux.dir/server.c.o: server.c \
   /usr/include/x86_64-linux-gnu/bits/endianness.h \
   /usr/include/x86_64-linux-gnu/bits/environments.h \
   /usr/include/x86_64-linux-gnu/bits/errno.h \
+  /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
+  /usr/include/x86_64-linux-gnu/bits/fcntl.h \
   /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
   /usr/include/x86_64-linux-gnu/bits/floatn.h \
   /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
@@ -390,6 +393,7 @@ CMakeFiles/mini-tmux.dir/server.c.o: server.c \
   /usr/include/x86_64-linux-gnu/bits/socket.h \
   /usr/include/x86_64-linux-gnu/bits/socket_type.h \
   /usr/include/x86_64-linux-gnu/bits/ss_flags.h \
+  /usr/include/x86_64-linux-gnu/bits/stat.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
@@ -397,6 +401,7 @@ CMakeFiles/mini-tmux.dir/server.c.o: server.c \
   /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
   /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
   /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
+  /usr/include/x86_64-linux-gnu/bits/struct_stat.h \
   /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
   /usr/include/x86_64-linux-gnu/bits/time64.h \
   /usr/include/x86_64-linux-gnu/bits/timesize.h \
@@ -562,22 +567,30 @@ CMakeFiles/mini-tmux.dir/spawn.c.o: spawn.c \
 
 CMakeFiles/mini-tmux.dir/util.c.o: util.c \
   client.h \
+  log.h \
   mini_tmux-protocol.h \
   util.h \
   /usr/include/alloca.h \
+  /usr/include/asm-generic/errno-base.h \
+  /usr/include/asm-generic/errno.h \
   /usr/include/asm-generic/ioctl.h \
   /usr/include/asm-generic/ioctls.h \
   /usr/include/endian.h \
+  /usr/include/errno.h \
   /usr/include/fcntl.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
+  /usr/include/linux/errno.h \
   /usr/include/linux/ioctl.h \
   /usr/include/paths.h \
   /usr/include/pwd.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
   /usr/include/termios.h \
   /usr/include/unistd.h \
+  /usr/include/x86_64-linux-gnu/asm/errno.h \
   /usr/include/x86_64-linux-gnu/asm/ioctl.h \
   /usr/include/x86_64-linux-gnu/asm/ioctls.h \
   /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
@@ -586,6 +599,7 @@ CMakeFiles/mini-tmux.dir/util.c.o: util.c \
   /usr/include/x86_64-linux-gnu/bits/endian.h \
   /usr/include/x86_64-linux-gnu/bits/endianness.h \
   /usr/include/x86_64-linux-gnu/bits/environments.h \
+  /usr/include/x86_64-linux-gnu/bits/errno.h \
   /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
   /usr/include/x86_64-linux-gnu/bits/fcntl.h \
   /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
@@ -621,9 +635,11 @@ CMakeFiles/mini-tmux.dir/util.c.o: util.c \
   /usr/include/x86_64-linux-gnu/bits/timesize.h \
   /usr/include/x86_64-linux-gnu/bits/types.h \
   /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
@@ -638,6 +654,7 @@ CMakeFiles/mini-tmux.dir/util.c.o: util.c \
   /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
   /usr/include/x86_64-linux-gnu/gnu/stubs.h \
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+  /usr/include/x86_64-linux-gnu/sys/file.h \
   /usr/include/x86_64-linux-gnu/sys/ioctl.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/ttydefaults.h \

@@ -46,17 +46,12 @@ void server_receive(int fd) {
 
   switch (hdr.type) {
   case MSG_COMMAND:
-    log_info("received command: '%s', len=%zu", buf, hdr.len);
-    log_info("first 20 bytes (hex):");
-    for (size_t i = 0; i < hdr.len && i < 20; i++) {
-      fprintf(stderr, "%02x ", (unsigned char)buf[i]);
-    }
-    fprintf(stderr, "\n");
-    log_info("strcmp result: %d", strcmp(buf, "new-session"));
     if (strcmp(buf, "new-session") == 0) {
       log_info("create a new session");
     }
     break;
+  case MSG_EXITED:
+    log_info("exit a session, pid:%d", buf);
   default:
     log_warn("unknown msgtype %d", hdr.type);
   }

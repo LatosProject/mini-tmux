@@ -316,9 +316,7 @@ int client_main(struct client *c) {
 
   // 创建新session
   char buf[100] = "new-session";
-  size_t len = strlen(buf) + 1;
-  log_info("sending command: '%s', len=%zu", buf, len);
-  send_server(MSG_COMMAND, fd, buf, len);
+  send_server(MSG_COMMAND, fd, buf, strlen(buf) + 1);
 
   // 终端窗口尺寸更新
   struct sigaction sa;
@@ -332,6 +330,9 @@ int client_main(struct client *c) {
 
   log_info("entering client loop");
   client_loop(c);
+  // 创建新session
+  snprintf(buf, sizeof(buf), "%d", c->slave_pid);
+  send_server(MSG_EXITED, fd, buf, strlen(buf) + 1);
   log_info("client exiting");
   log_close();
   return 0;
