@@ -421,6 +421,7 @@ CMakeFiles/mini-tmux.dir/server.c.o
  /usr/include/x86_64-linux-gnu/bits/types/clock_t.h
  /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h
+ /usr/include/x86_64-linux-gnu/bits/types/idtype_t.h
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h
  /usr/include/x86_64-linux-gnu/bits/types/sig_atomic_t.h
  /usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h
@@ -448,9 +449,11 @@ CMakeFiles/mini-tmux.dir/server.c.o
  /usr/include/x86_64-linux-gnu/sys/cdefs.h
  /usr/include/x86_64-linux-gnu/sys/select.h
  /usr/include/x86_64-linux-gnu/sys/socket.h
+ /usr/include/x86_64-linux-gnu/sys/stat.h
  /usr/include/x86_64-linux-gnu/sys/types.h
  /usr/include/x86_64-linux-gnu/sys/ucontext.h
  /usr/include/x86_64-linux-gnu/sys/un.h
+ /usr/include/x86_64-linux-gnu/sys/wait.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h

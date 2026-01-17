@@ -236,6 +236,8 @@ static int client_connect(const char *path) {
     log_debug("got lock %d", lockfd);
     // 连接失败后新建
     fd = server_start();
+  } else {
+    log_debug("connected sucessfully");
   }
   if (locked && lockfd >= 0) {
     close(lockfd);

@@ -2,13 +2,16 @@
 #include "mini_tmux-protocol.h"
 #include <bits/types/sigset_t.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 extern char *socket_path;
@@ -116,16 +119,44 @@ int server_start() {
     return -1;
   }
   if (pid == 0) {
-    // 新创建的子进程(server)
-    // 子进程：server
-    log_init("server");
-    log_info("server process started, pid %d", getpid());
+    // 成为守护进程
+
+    if (setsid() == -1) {
+      log_error("setsid failed: %s", strerror(errno));
+      _exit(1);
+    }
+
+    //  二次 fork，确保不能重新获取控制终端
+    pid_t pid2 = fork();
+    if (pid2 < 0) {
+      _exit(1);
+    }
+    if (pid2 > 0) {
+      // 第一个子进程退出，让子进程成为真正的守护进程
+      _exit(0);
+    }
+
+    // 设置文件权限掩码
+    umask(0);
+
+    // 关闭标准输入输出，重定向到 /dev/null
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    open("/dev/null", O_RDONLY); // stdin  -> fd 0
+    open("/dev/null", O_WRONLY); // stdout -> fd 1
+    open("/dev/null", O_WRONLY); // stderr -> fd 2
+
     sigprocmask(SIG_SETMASK, &oldset, NULL);
+    log_init("server");
+    log_info("server daemon started, pid %d", getpid());
     server_loop(listen_fd);
     close(listen_fd);
     log_close();
-    exit(0);
+    _exit(0);
   } else {
+    // 等待第一个子进程退出（它会立即退出，孙进程继续运行）
+    waitpid(pid, NULL, 0);
     // 父进程：client，连接到 server
     sigprocmask(SIG_SETMASK, &oldset, NULL);
     close(listen_fd);
