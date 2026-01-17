@@ -1,6 +1,8 @@
+#include <stddef.h>
 #define _GNU_SOURCE
 #include "client.h"
 #include "main.h"
+#include "server.h"
 #include "spawn.h"
 #include "util.h"
 #include <arpa/inet.h>
@@ -227,8 +229,34 @@ static int client_connect(const char *path) {
         printf("didn't get lock %d\n", lockfd);
       }
     }
+    // lock标识符存在，无法删除目录项，且失败原因不是文件夹不存在
+    if (lockfd >= 0 && unlink(path) != 0 && errno != ENOENT) {
+      close(lockfd);
+      return -1;
+    }
+    printf("got lock %d\n", lockfd);
+    // 连接失败后新建
+    fd = server_start();
   }
-  return 1;
+  if (locked && lockfd >= 0) {
+    close(lockfd);
+  }
+  return fd;
+}
+
+int send_server(int fd, const void *buf, size_t len) {
+  size_t sent = 0;
+  const char *p = buf;
+  while (sent < len) {
+    ssize_t n = write(fd, p + sent, len - sent);
+    if (n == -1) {
+      if (errno == EINTR)
+        continue; // 被信号打断，重试
+      return -1;
+    }
+    sent += n;
+  }
+  return 0;
 }
 
 int client_main(struct client *c) {
@@ -257,8 +285,8 @@ int client_main(struct client *c) {
   if (c->slave_pid < 0) {
     return -1;
   }
-
-  client_connect(socket_path);
+  int fd;
+  fd = client_connect(socket_path);
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;
