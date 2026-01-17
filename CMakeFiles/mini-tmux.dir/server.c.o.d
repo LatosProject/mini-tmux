@@ -1,8 +1,8 @@
 CMakeFiles/mini-tmux.dir/server.c.o: \
  /home/latos/project/mini-tmux/server.c /usr/include/stdc-predef.h \
+ /home/latos/project/mini-tmux/log.h \
  /home/latos/project/mini-tmux/mini_tmux-protocol.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
- /home/latos/project/mini-tmux/log.h \
  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
  /usr/include/errno.h /usr/include/features.h \

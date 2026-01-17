@@ -313,8 +313,13 @@ int client_main(struct client *c) {
     log_error("client connect failed");
     return -1;
   }
+
+  // 创建新session
   char buf[100] = "new-session";
-  send_server(MSG_COMMAND, fd, &buf, strlen(buf) + 1);
+  size_t len = strlen(buf) + 1;
+  log_info("sending command: '%s', len=%zu", buf, len);
+  send_server(MSG_COMMAND, fd, buf, len);
+
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;

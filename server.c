@@ -1,5 +1,5 @@
-#include "mini_tmux-protocol.h"
 #include "log.h"
+#include "mini_tmux-protocol.h"
 #include <bits/types/sigset_t.h>
 #include <errno.h>
 #include <signal.h>
@@ -46,7 +46,16 @@ void server_receive(int fd) {
 
   switch (hdr.type) {
   case MSG_COMMAND:
-    log_info("received command: %s", buf);
+    log_info("received command: '%s', len=%zu", buf, hdr.len);
+    log_info("first 20 bytes (hex):");
+    for (size_t i = 0; i < hdr.len && i < 20; i++) {
+      fprintf(stderr, "%02x ", (unsigned char)buf[i]);
+    }
+    fprintf(stderr, "\n");
+    log_info("strcmp result: %d", strcmp(buf, "new-session"));
+    if (strcmp(buf, "new-session") == 0) {
+      log_info("create a new session");
+    }
     break;
   default:
     log_warn("unknown msgtype %d", hdr.type);
@@ -112,6 +121,7 @@ int server_start() {
     return -1;
   }
   if (pid == 0) {
+    // 新创建的子进程(server)
     // 子进程：server
     log_init("server");
     log_info("server process started, pid %d", getpid());
