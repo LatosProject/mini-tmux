@@ -1,4 +1,5 @@
 // client.h
+#include "mini_tmux-protocol.h"
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <termios.h>

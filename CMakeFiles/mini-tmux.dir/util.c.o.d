@@ -1,6 +1,8 @@
 CMakeFiles/mini-tmux.dir/util.c.o: /home/latos/project/mini-tmux/util.c \
  /usr/include/stdc-predef.h /home/latos/project/mini-tmux/util.h \
  /home/latos/project/mini-tmux/client.h \
+ /home/latos/project/mini-tmux/mini_tmux-protocol.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
  /usr/include/x86_64-linux-gnu/sys/ioctl.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -24,7 +26,6 @@ CMakeFiles/mini-tmux.dir/util.c.o: /home/latos/project/mini-tmux/util.c \
  /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h /usr/include/endian.h \
  /usr/include/x86_64-linux-gnu/bits/endian.h \
  /usr/include/x86_64-linux-gnu/bits/endianness.h \

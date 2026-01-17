@@ -1,6 +1,6 @@
-#include <stddef.h>
 #define _GNU_SOURCE
 #include "client.h"
+#include "log.h"
 #include "main.h"
 #include "server.h"
 #include "spawn.h"
@@ -50,7 +50,7 @@ void dispatch_event(struct client *c, client_event ev) {
       return;
     }
   }
-  fprintf(stderr, "[FSM] unhandled event %d in state %d\n", ev, c->state);
+  log_warn("FSM unhandled event %d in state %d", ev, c->state);
 }
 
 void act_resize(struct client *c, client_event ev) {
@@ -149,7 +149,7 @@ void client_loop(struct client *c) {
       // 防止收到信号后中断 fd
       if (errno != EINTR) {
         dispatch_event(c, EV_INTERRUPT);
-        perror("select");
+        log_error("select failed: %s", strerror(errno));
         break;
       }
       // fd 检查完毕
@@ -180,15 +180,15 @@ void client_loop(struct client *c) {
 }
 static int client_get_lock(char *lockfile) {
   int lockfd;
-  printf("lock file is %s\n", lockfile);
+  log_debug("lock file is %s", lockfile);
 
   if ((lockfd = open(lockfile, O_RDWR | O_CREAT, 0600)) == -1) {
-    printf("open failed: %s\n", strerror(errno));
+    log_error("open lock file failed: %s", strerror(errno));
     return -1;
   }
 
   if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
-    printf("flock failed: %s\n", strerror(errno));
+    log_debug("flock failed: %s", strerror(errno));
     if (errno != EAGAIN)
       return lockfd;
     // 信号阻塞等待
@@ -197,7 +197,7 @@ static int client_get_lock(char *lockfile) {
     close(lockfd);
     return -2;
   }
-  printf("flock succeeded\n");
+  log_debug("flock succeeded");
   return lockfd;
 }
 static int client_connect(const char *path) {
@@ -213,20 +213,19 @@ static int client_connect(const char *path) {
   strlcpy(sa.sun_path, path, sizeof(sa.sun_path));
 
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-    perror("socket failed");
+    log_error("socket failed: %s", strerror(errno));
     return -1;
   }
-  // TODO
-  printf("socket is %s\n", path);
-  printf("trying connect\n");
+  log_debug("socket path is %s", path);
+  log_debug("trying connect");
   if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
-    printf("connect faild: %s\n", strerror(errno));
+    log_debug("connect failed: %s", strerror(errno));
     close(fd);
     if (!locked) {
       snprintf(buf, sizeof(buf), "%s.lock", path);
       lockfile = buf;
       if ((lockfd = client_get_lock(lockfile)) < 0) {
-        printf("didn't get lock %d\n", lockfd);
+        log_debug("didn't get lock %d", lockfd);
       }
     }
     // lock标识符存在，无法删除目录项，且失败原因不是文件夹不存在
@@ -234,7 +233,7 @@ static int client_connect(const char *path) {
       close(lockfd);
       return -1;
     }
-    printf("got lock %d\n", lockfd);
+    log_debug("got lock %d", lockfd);
     // 连接失败后新建
     fd = server_start();
   }
@@ -244,9 +243,25 @@ static int client_connect(const char *path) {
   return fd;
 }
 
-int send_server(int fd, const void *buf, size_t len) {
+int send_server(enum msgtype type, int fd, const void *buf, size_t len) {
+  struct msg_header hdr = {type, len};
+  ssize_t n;
+  const char *ph = (const char *)&hdr;
+  // 发送 header
   size_t sent = 0;
+  while (sent < sizeof(hdr)) {
+    ssize_t n = write(fd, ph + sent, sizeof(hdr) - sent);
+    if (n == -1) {
+      if (errno == EINTR)
+        continue; // 被信号打断，重试
+      return -1;
+    }
+    sent += n;
+  }
+
+  // 发送数据
   const char *p = buf;
+  sent = 0;
   while (sent < len) {
     ssize_t n = write(fd, p + sent, len - sent);
     if (n == -1) {
@@ -260,9 +275,12 @@ int send_server(int fd, const void *buf, size_t len) {
 }
 
 int client_main(struct client *c) {
+  log_init("client");
+  log_info("client starting");
+
   c->master_fd = posix_openpt(O_RDWR);
   if (c->master_fd == -1) {
-    perror("posix_openpt");
+    log_error("posix_openpt failed: %s", strerror(errno));
     return -1;
   }
   // 解锁 slave 设备
@@ -271,6 +289,7 @@ int client_main(struct client *c) {
   c->slave_name = ptsname(c->master_fd);
   c->slave_fd = open(c->slave_name, O_RDWR);
   if (ioctl(STDIN_FILENO, TIOCGWINSZ, &c->ws) == -1) {
+    log_error("ioctl TIOCGWINSZ failed: %s", strerror(errno));
     return -1;
   }
   ioctl(c->slave_fd, TIOCSWINSZ, &c->ws);
@@ -283,10 +302,19 @@ int client_main(struct client *c) {
   c->slave_pid = spawn_child(c);
 
   if (c->slave_pid < 0) {
+    log_error("spawn_child failed");
     return -1;
   }
+  log_info("spawned child process with pid %d", c->slave_pid);
+
   int fd;
   fd = client_connect(socket_path);
+  if (fd == -1) {
+    log_error("client connect failed");
+    return -1;
+  }
+  char buf[100] = "new-session";
+  send_server(MSG_COMMAND, fd, &buf, strlen(buf) + 1);
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;
@@ -297,10 +325,9 @@ int client_main(struct client *c) {
 
   dispatch_event(c, EV_ENABLE_RAW_MODE);
 
-  char msg[100] = {0};
-  snprintf(msg, sizeof(msg), "Spawned child process with PID: %d\n",
-           c->slave_pid);
-  write(STDOUT_FILENO, msg, strlen(msg));
+  log_info("entering client loop");
   client_loop(c);
+  log_info("client exiting");
+  log_close();
   return 0;
 }

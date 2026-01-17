@@ -153,6 +153,30 @@ client.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/client.c.s
 .PHONY : client.c.s
 
+log.o: log.c.o
+.PHONY : log.o
+
+# target to build an object file
+log.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/log.c.o
+.PHONY : log.c.o
+
+log.i: log.c.i
+.PHONY : log.i
+
+# target to preprocess a source file
+log.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/log.c.i
+.PHONY : log.c.i
+
+log.s: log.c.s
+.PHONY : log.s
+
+# target to generate assembly for a file
+log.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/log.c.s
+.PHONY : log.c.s
+
 main.o: main.c.o
 .PHONY : main.o
 
@@ -176,6 +200,30 @@ main.s: main.c.s
 main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/main.c.s
 .PHONY : main.c.s
+
+server.o: server.c.o
+.PHONY : server.o
+
+# target to build an object file
+server.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/server.c.o
+.PHONY : server.c.o
+
+server.i: server.c.i
+.PHONY : server.i
+
+# target to preprocess a source file
+server.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/server.c.i
+.PHONY : server.c.i
+
+server.s: server.c.s
+.PHONY : server.s
+
+# target to generate assembly for a file
+server.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/server.c.s
+.PHONY : server.c.s
 
 spawn.o: spawn.c.o
 .PHONY : spawn.o
@@ -237,9 +285,15 @@ help:
 	@echo "... client.o"
 	@echo "... client.i"
 	@echo "... client.s"
+	@echo "... log.o"
+	@echo "... log.i"
+	@echo "... log.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... server.o"
+	@echo "... server.i"
+	@echo "... server.s"
 	@echo "... spawn.o"
 	@echo "... spawn.i"
 	@echo "... spawn.s"
