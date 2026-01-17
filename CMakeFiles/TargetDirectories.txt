@@ -1,3 +1,3 @@
-/Users/latos/mini-tmux/CMakeFiles/mini-tmux.dir
-/Users/latos/mini-tmux/CMakeFiles/edit_cache.dir
-/Users/latos/mini-tmux/CMakeFiles/rebuild_cache.dir
+/home/latos/project/mini-tmux/CMakeFiles/mini-tmux.dir
+/home/latos/project/mini-tmux/CMakeFiles/edit_cache.dir
+/home/latos/project/mini-tmux/CMakeFiles/rebuild_cache.dir

@@ -37,13 +37,6 @@ pid_t spawn_child(struct client *c) {
     char buf[100];
     snprintf(buf, sizeof(buf), "%d", c->slave_pid);
 
-    // 不允许嵌套运行
-    if (client_check_nested()) {
-      char buff[100] = "sessions should be nested with care\n";
-      write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
-      _exit(-1);
-    }
-
     setenv("MINI_TMUX", buf, 1);
     struct termios ts;
 

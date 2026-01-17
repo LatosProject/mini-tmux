@@ -1,13 +1,21 @@
+#define _GNU_SOURCE
 #include "client.h"
 #include "main.h"
 #include "spawn.h"
+#include "util.h"
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
@@ -168,20 +176,62 @@ void client_loop(struct client *c) {
     }
   }
 }
+static int client_get_lock(char *lockfile) {
+  int lockfd;
+  printf("lock file is %s\n", lockfile);
 
+  if ((lockfd = open(lockfile, O_RDWR | O_CREAT, 0600)) == -1) {
+    printf("open failed: %s\n", strerror(errno));
+    return -1;
+  }
+
+  if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
+    printf("flock failed: %s\n", strerror(errno));
+    if (errno != EAGAIN)
+      return lockfd;
+    // 信号阻塞等待
+    while (flock(lockfd, LOCK_EX) == -1 && errno == EINTR)
+      ;
+    close(lockfd);
+    return -2;
+  }
+  printf("flock succeeded\n");
+  return lockfd;
+}
 static int client_connect(const char *path) {
-  int fd = -1;
+  struct sockaddr_un sa;
+  int fd, lockfd = -1;
+  int locked = 0;
+  char buf[100] = {0};
+  char *lockfile = NULL;
+
+  // 将一段内存全部设置为指定的字节值
+  memset(&sa, 0, sizeof(sa));
+  sa.sun_family = AF_UNIX;
+  strlcpy(sa.sun_path, path, sizeof(sa.sun_path));
+
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     perror("socket failed");
     return -1;
   }
   // TODO
   printf("socket is %s\n", path);
+  printf("trying connect\n");
+  if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+    printf("connect faild: %s\n", strerror(errno));
+    close(fd);
+    if (!locked) {
+      snprintf(buf, sizeof(buf), "%s.lock", path);
+      lockfile = buf;
+      if ((lockfd = client_get_lock(lockfile)) < 0) {
+        printf("didn't get lock %d\n", lockfd);
+      }
+    }
+  }
   return 1;
 }
 
 int client_main(struct client *c) {
-  client_connect(socket_path);
   c->master_fd = posix_openpt(O_RDWR);
   if (c->master_fd == -1) {
     perror("posix_openpt");
@@ -196,10 +246,19 @@ int client_main(struct client *c) {
     return -1;
   }
   ioctl(c->slave_fd, TIOCSWINSZ, &c->ws);
+  // 不允许嵌套运行
+  if (client_check_nested()) {
+    char buff[100] = "sessions should be nested with care\n";
+    write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
+    _exit(-1);
+  }
   c->slave_pid = spawn_child(c);
+
   if (c->slave_pid < 0) {
     return -1;
   }
+
+  client_connect(socket_path);
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;
