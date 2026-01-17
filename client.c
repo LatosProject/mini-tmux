@@ -1,4 +1,5 @@
 #include "client.h"
+#include "main.h"
 #include "spawn.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -11,6 +12,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+extern char *socket_path;
 volatile sig_atomic_t sigwinch_pending,
     sigchld_pending = 0; // C 语言唯一保证信号读写安全的类型
 static const state_transition table[] = {
@@ -166,7 +168,20 @@ void client_loop(struct client *c) {
     }
   }
 }
+
+static int client_connect(const char *path) {
+  int fd = -1;
+  if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    perror("socket failed");
+    return -1;
+  }
+  // TODO
+  printf("socket is %s\n", path);
+  return 1;
+}
+
 int client_main(struct client *c) {
+  client_connect(socket_path);
   c->master_fd = posix_openpt(O_RDWR);
   if (c->master_fd == -1) {
     perror("posix_openpt");
@@ -196,7 +211,8 @@ int client_main(struct client *c) {
   dispatch_event(c, EV_ENABLE_RAW_MODE);
 
   char msg[100] = {0};
-  snprintf(msg, sizeof(msg), "Spawned child process with PID: %d\n", c->slave_pid);
+  snprintf(msg, sizeof(msg), "Spawned child process with PID: %d\n",
+           c->slave_pid);
   write(STDOUT_FILENO, msg, strlen(msg));
   client_loop(c);
   return 0;

@@ -1,4 +1,9 @@
 CMakeFiles/mini-tmux.dir/main.c.o: /Users/latos/mini-tmux/main.c \
+ /Users/latos/mini-tmux/main.h \
+ /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/paths.h \
+ /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/paths.h \
+ /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/appleapiopts.h \
+ /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include/stdarg.h \
  /Users/latos/mini-tmux/client.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ioctl.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ttycom.h \
@@ -12,7 +17,6 @@ CMakeFiles/mini-tmux.dir/main.c.o: /Users/latos/mini-tmux/main.c \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_pthread/_pthread_types.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/filio.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/sockio.h \
- /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/appleapiopts.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/if.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/if_var.h \
  /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include/stdint.h \
@@ -126,7 +130,6 @@ CMakeFiles/mini-tmux.dir/main.c.o: /Users/latos/mini-tmux/main.c \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_s_ifmt.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_filesec_t.h \
  /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/stdio.h \
- /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include/stdarg.h \
  /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/_stdio.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_va_list.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/stdio.h \

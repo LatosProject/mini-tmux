@@ -117,6 +117,10 @@ CMakeFiles/mini-tmux.dir/client.c.o: /Users/latos/mini-tmux/client.c \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/termios.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_posix_vdisable.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ttydefaults.h \
+ /Users/latos/mini-tmux/main.h \
+ /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/paths.h \
+ /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/paths.h \
+ /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include/stdarg.h \
  /Users/latos/mini-tmux/spawn.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/errno.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/errno.h \
@@ -139,7 +143,6 @@ CMakeFiles/mini-tmux.dir/client.c.o: /Users/latos/mini-tmux/client.c \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_ucontext.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_sigset_t.h \
  /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/stdio.h \
- /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include/stdarg.h \
  /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/_stdio.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_va_list.h \
  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/stdio.h \

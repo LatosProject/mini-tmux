@@ -49,6 +49,7 @@ CMakeFiles/mini-tmux.dir/client.c.o: client.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/if_var.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/net_kev.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/paths.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_common.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_stdio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_string.h \
@@ -149,6 +150,7 @@ CMakeFiles/mini-tmux.dir/client.c.o: client.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/filio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ioccom.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ioctl.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/paths.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/resource.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/select.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/signal.h \
@@ -166,6 +168,7 @@ CMakeFiles/mini-tmux.dir/client.c.o: client.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/time.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/unistd.h \
   client.h \
+  main.h \
   spawn.h \
   /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/_stdio.h \
   /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/stdint.h \
@@ -220,6 +223,7 @@ CMakeFiles/mini-tmux.dir/main.c.o: main.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/if_var.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/net/net_kev.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/paths.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_common.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_stdio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_string.h \
@@ -318,6 +322,7 @@ CMakeFiles/mini-tmux.dir/main.c.o: main.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/filio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ioccom.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/ioctl.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/paths.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/resource.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/select.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/signal.h \
@@ -335,6 +340,7 @@ CMakeFiles/mini-tmux.dir/main.c.o: main.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/time.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/unistd.h \
   client.h \
+  main.h \
   spawn.h \
   /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/_stdio.h \
   /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include-fixed/stdint.h \
@@ -672,8 +678,6 @@ CMakeFiles/mini-tmux.dir/util.c.o: util.c \
   /opt/homebrew/Cellar/gcc@14/14.3.0/lib/gcc/14/gcc/aarch64-apple-darwin25/14/include/stdint.h
 
 
-/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/paths.h:
-
 util.h:
 
 main.c:
@@ -776,10 +780,6 @@ client.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_ino_t.h:
 
-/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_ssize_t.h:
-
-/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_ino64_t.h:
-
 util.c:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_u_char.h:
@@ -880,6 +880,8 @@ spawn.c:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_string.h:
 
+main.h:
+
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_int8_t.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_fd_def.h:
@@ -887,6 +889,12 @@ spawn.c:
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/wait.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/secure/_stdio.h:
+
+/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_ssize_t.h:
+
+/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_types/_ino64_t.h:
+
+/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/paths.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include/sys/_pthread/_pthread_condattr_t.h:
 

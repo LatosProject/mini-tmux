@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #define _DARWIN_C_SOURCE
 #define _XOPEN_SOURCE 600
+#include "main.h"
 #include "client.h"
 #include "spawn.h"
 #include <fcntl.h>
@@ -12,10 +13,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-
 struct client client;
+char	*socket_path;
 
 int main() {
+  uid_t uid = getuid();
+
+  char buf[100]={0};
+  snprintf(buf,sizeof(buf),"%smini-tmux-%d",MINI_TMUX_SOCK,uid);
+  socket_path = buf;
   client_init(&client);
   if (client_main(&client)<0){
     return -1;
