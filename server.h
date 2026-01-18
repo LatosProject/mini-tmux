@@ -2,6 +2,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <termios.h>
+#include "list.h"
 int server_start() ;
 struct session {
   int id;
@@ -13,5 +14,7 @@ struct session {
   int child_exited;
   struct termios raw;
   char *slave_name;
-   struct environ *environ;
+  struct environ *environ;
+
+  struct list_head link;
 };

@@ -1,12 +1,9 @@
 #include "util.h"
 #include "client.h"
-#include "log.h"
-#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/file.h>
 #include <unistd.h>
 struct passwd *pw;

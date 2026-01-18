@@ -285,7 +285,7 @@ int client_main(struct client *c) {
     log_error("client connect failed");
     return -1;
   }
-
+  log_info("connected to server, fd %d", fd);
   // 创建新session
   char buf[100] = "new-session";
   send_server(MSG_RESIZE, fd, &c->ws, sizeof(c->ws));

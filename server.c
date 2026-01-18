@@ -1,9 +1,10 @@
+#include "list.h"
 #define _XOPEN_SOURCE 700
-#include "server.h"
 #include "client.h"
 #include "log.h"
 #include "main.h"
 #include "mini_tmux-protocol.h"
+#include "server.h"
 #include "spawn.h"
 #include "util.h"
 #include <errno.h>
@@ -20,6 +21,7 @@
 #include <unistd.h>
 extern char *socket_path;
 struct session *s = NULL;
+struct list_head session_list;
 ssize_t read_n(int fd, void *buf, size_t n) {
   size_t recvd = 0;
   char *p = buf;
@@ -45,6 +47,9 @@ void server_signal_handler(int sig) {
   case SIGCHLD:
     s->child_exited = 1;
     ret = waitpid(s->slave_pid, &status, WNOHANG);
+    // 收回子进程，client返回eof
+    close(s->master_fd);
+    close(s->slave_fd);
     break;
   }
 }
@@ -54,7 +59,8 @@ void session_init(struct session *s) {
   s->slave_fd = -1;
   s->slave_pid = -1;
   s->child_exited = 0;
-
+  list_init(&s->link);
+  list_add_tail(&s->link, &session_list);
   tcgetattr(STDIN_FILENO, &(s->orig_termios));
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
 }
@@ -64,6 +70,8 @@ int server_receive(int fd) {
   if (s == NULL) {
     s = malloc(sizeof(struct session));
     session_init(s);
+    s->id = 0;
+    list_add_tail(&s->link, &session_list);
   }
   struct msg_header hdr;
   if (read_n(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
@@ -81,9 +89,17 @@ int server_receive(int fd) {
   switch (hdr.type) {
   case MSG_COMMAND:
     if (strcmp(buf, "new-session") == 0) {
-      // extern struct client client;
-      // struct session *s = malloc(sizeof(struct session));
-      // session_init(s);
+      if (!list_empty(&session_list)) {
+        // 链表非空，创建新 session，id = last->id + 1
+        struct session *last =
+            list_last_entry(&session_list, struct session, link);
+        s = malloc(sizeof(struct session));
+        session_init(s);
+        s->id = last->id + 1;
+        list_add_tail(&s->link, &session_list);
+      }
+      // 否则用已有的 s（id=0），但也需要加入链表
+
       s->master_fd = posix_openpt(O_RDWR);
       if (s->master_fd == -1) {
         log_error("posix_openpt failed: %s", strerror(errno));
@@ -97,7 +113,7 @@ int server_receive(int fd) {
       send_fd(fd, s->master_fd);
       s->slave_name = ptsname(s->master_fd);
       s->slave_fd = open(s->slave_name, O_RDWR);
-      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);  // 在 open 之后设置尺寸
+      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);
 
       // 不允许嵌套运行
       if (client_check_nested()) {
@@ -106,7 +122,7 @@ int server_receive(int fd) {
         _exit(-1);
       }
       // struct client *p = &client;
-      log_info("create a new session");
+      log_info("create a new session, id:%d", s->id);
 
       s->slave_pid = spawn_child(s);
 
@@ -154,12 +170,20 @@ void server_loop(int listen_fd) {
       break;
     }
     log_debug("accepted client fd %d", client_fd);
-    while (server_receive(client_fd) == 1)
-      ;
+    // fork一个子进程专门处理client请求，父进程继续监听。用于多client场景
+    pid_t pid = fork();
+    if (pid == 0) {
+      close(listen_fd); // 子进程不需要监听
+      while (server_receive(client_fd) == 1)
+        ;
+    } else {
+      close(client_fd); // 父进程不需要处理client请求
+    }
   }
 }
 
 int server_start() {
+  list_init(&session_list);
   sigset_t set, oldset;
   log_info("server is starting");
 
