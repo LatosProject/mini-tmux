@@ -33,7 +33,7 @@ static const state_transition table[] = {
     {ST_RUNNING, EV_STDIN_READ, ST_RUNNING, act_stdin_read},
     {ST_EXITING, EV_STDIN_READ, ST_EXITING, NULL},
     {ST_EXITING, EV_PTY_READ, ST_EXITING, NULL},
-    {ST_RUNNING, EV_EOF_PTY, ST_EXITING, NULL},
+    {ST_RUNNING, EV_EOF_PTY, ST_EXITING, act_child_exit},
     {ST_RUNNING, EV_EOF_STDIN, ST_EXITING, NULL},
     {ST_RUNNING, EV_INTERRUPT, ST_EXITING, NULL}};
 
@@ -111,7 +111,7 @@ void signal_handler(int sig) {
     break;
   // 回收子进程
   case SIGCHLD:
-    ret = waitpid(client.slave_pid, &status, WNOHANG);
+    // ret = waitpid(client.slave_pid, &status, WNOHANG);
     if (ret > 0) {
       sigchld_pending = 1;
     }
@@ -301,13 +301,6 @@ int client_main(struct client *c) {
     write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
     _exit(-1);
   }
-  c->slave_pid = spawn_child(c);
-
-  if (c->slave_pid < 0) {
-    log_error("spawn_child failed");
-    return -1;
-  }
-  log_info("spawned child process with pid %d", c->slave_pid);
 
   int fd;
   fd = client_connect(socket_path);
@@ -332,7 +325,7 @@ int client_main(struct client *c) {
 
   log_info("entering client loop");
   client_loop(c);
-  // 创建新session
+
   snprintf(buf, sizeof(buf), "%d", c->slave_pid);
   send_server(MSG_EXITED, fd, buf, strlen(buf) + 1);
   log_info("client exiting");

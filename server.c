@@ -1,6 +1,8 @@
+#include "client.h"
 #include "log.h"
+#include "main.h"
 #include "mini_tmux-protocol.h"
-#include <bits/types/sigset_t.h>
+#include "spawn.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -33,6 +35,20 @@ ssize_t read_n(int fd, void *buf, size_t n) {
   return recvd;
 }
 
+void server_signal_handler(int sig) {
+  extern struct client client;
+  struct client *p = &client;
+  int status;
+  int ret;
+  switch (sig) {
+  // 回收子进程
+  case SIGCHLD:
+    p->child_exited = 1;
+    ret = waitpid(client.slave_pid, &status, WNOHANG);
+    break;
+  }
+}
+
 void server_receive(int fd) {
   struct msg_header hdr;
   if (read_n(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
@@ -50,7 +66,22 @@ void server_receive(int fd) {
   switch (hdr.type) {
   case MSG_COMMAND:
     if (strcmp(buf, "new-session") == 0) {
+      extern struct client client;
+      struct client *p = &client;
       log_info("create a new session");
+      p->slave_pid = spawn_child(p);
+
+      if (p->slave_pid < 0) {
+        log_error("spawn_child failed");
+        _exit(-1);
+      }
+
+      struct sigaction sa;
+      sa.sa_handler = server_signal_handler;
+      sa.sa_flags = SA_RESTART;
+      sigemptyset(&sa.sa_mask);
+      sigaction(SIGCHLD, &sa, NULL);
+      log_info("spawned child process with pid %d", p->slave_pid);
     }
     break;
   case MSG_EXITED:
@@ -155,7 +186,7 @@ int server_start() {
     log_close();
     _exit(0);
   } else {
-    // 等待第一个子进程退出（它会立即退出，孙进程继续运行）
+    // 等待第一个子进程退出（它会立即退出，子进程继续运行）
     waitpid(pid, NULL, 0);
     // 父进程：client，连接到 server
     sigprocmask(SIG_SETMASK, &oldset, NULL);
