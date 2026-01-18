@@ -1,4 +1,4 @@
-#include "client.h"
+#include "server.h"
 #include "util.h"
 #include <fcntl.h>
 #include <stdio.h>
@@ -10,7 +10,7 @@
 #include <unistd.h>
 extern char **environ;
 
-pid_t spawn_child(struct client *c) {
+pid_t spawn_child(struct session *s) {
 
   pid_t pid = fork();
   if (pid < 0) {
@@ -23,30 +23,30 @@ pid_t spawn_child(struct client *c) {
     // 创建了一个会话
     setsid();
 
-    c->slave_fd = open(*&c->slave_name, O_RDWR);
-    if (c->slave_fd < 0) {
+    s->slave_fd = open(*&s->slave_name, O_RDWR);
+    if (s->slave_fd < 0) {
       perror("open slave pty failed");
       _exit(1);
     }
     // 把 slave 设为子进程的控制终端
-    ioctl(c->slave_fd, TIOCSCTTY, 0);
+    ioctl(s->slave_fd, TIOCSCTTY, 0);
 
     setenv("TERM", "screen-256color", 1);
 
     char buf[100];
-    snprintf(buf, sizeof(buf), "%d", c->slave_pid);
+    snprintf(buf, sizeof(buf), "%d", s->slave_pid);
 
     setenv("MINI_TMUX", buf, 1);
     struct termios ts;
 
     tcsetpgrp(
-        c->slave_fd,
+        s->slave_fd,
         getpid()); // 设置前台进程组。这样，终端设备驱动程序就能了解将终端输入和终端产生的信号送到何处。
 
-    dup2(c->slave_fd, STDIN_FILENO);
-    dup2(c->slave_fd, STDOUT_FILENO);
-    dup2(c->slave_fd, STDERR_FILENO);
-    close(c->slave_fd);
+    dup2(s->slave_fd, STDIN_FILENO);
+    dup2(s->slave_fd, STDOUT_FILENO);
+    dup2(s->slave_fd, STDERR_FILENO);
+    close(s->slave_fd);
     execve(args[0], args, environ);
     perror("Execve failed");
     _exit(1); // Use _exit to avoid flushing stdio buffers again

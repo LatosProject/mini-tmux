@@ -52,3 +52,52 @@ int client_check_nested() {
     return (0);
   return (1);
 }
+
+// fdpass.c
+int send_fd(int sock, int fd) {
+  struct msghdr msg = {0};
+  struct iovec iov[1];
+  char buf[1] = {0};
+
+  // 辅助数据缓冲区，存放要传递的 fd
+  char cmsgbuf[CMSG_SPACE(sizeof(int))];
+
+  iov[0].iov_base = buf;
+  iov[0].iov_len = 1;
+  msg.msg_iov = iov;
+  msg.msg_iovlen = 1;
+
+  msg.msg_control = cmsgbuf;
+  msg.msg_controllen = sizeof(cmsgbuf);
+
+  struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+  cmsg->cmsg_level = SOL_SOCKET;
+  cmsg->cmsg_type = SCM_RIGHTS; // 关键：传递文件描述符
+  cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+  *(int *)CMSG_DATA(cmsg) = fd; // 把 fd 放进去
+
+  return sendmsg(sock, &msg, 0) >= 0 ? 0 : -1;
+}
+
+int recv_fd(int sock) {
+  struct msghdr msg = {0};
+  struct iovec iov[1];
+  char buf[1];
+  char cmsgbuf[CMSG_SPACE(sizeof(int))];
+
+  iov[0].iov_base = buf;
+  iov[0].iov_len = 1;
+  msg.msg_iov = iov;
+  msg.msg_iovlen = 1;
+  msg.msg_control = cmsgbuf;
+  msg.msg_controllen = sizeof(cmsgbuf);
+
+  if (recvmsg(sock, &msg, 0) < 0)
+    return -1;
+
+  struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+  if (cmsg && cmsg->cmsg_type == SCM_RIGHTS) {
+    return *(int *)CMSG_DATA(cmsg); // 提取接收到的 fd
+  }
+  return -1;
+}

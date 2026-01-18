@@ -21,7 +21,6 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-
 extern char *socket_path;
 volatile sig_atomic_t sigwinch_pending,
     sigchld_pending = 0; // C 语言唯一保证信号读写安全的类型
@@ -135,7 +134,6 @@ void client_loop(struct client *c) {
     if (c->child_exited)
       break;
     fd_set rfds;
-
     // 输入和输出
     int maxfd;
     FD_ZERO(&rfds);
@@ -280,28 +278,6 @@ int client_main(struct client *c) {
   log_init("client");
   log_info("client starting");
 
-  c->master_fd = posix_openpt(O_RDWR);
-  if (c->master_fd == -1) {
-    log_error("posix_openpt failed: %s", strerror(errno));
-    return -1;
-  }
-  // 解锁 slave 设备
-  grantpt(c->master_fd);
-  unlockpt(c->master_fd);
-  c->slave_name = ptsname(c->master_fd);
-  c->slave_fd = open(c->slave_name, O_RDWR);
-  if (ioctl(STDIN_FILENO, TIOCGWINSZ, &c->ws) == -1) {
-    log_error("ioctl TIOCGWINSZ failed: %s", strerror(errno));
-    return -1;
-  }
-  ioctl(c->slave_fd, TIOCSWINSZ, &c->ws);
-  // 不允许嵌套运行
-  if (client_check_nested()) {
-    char buff[100] = "sessions should be nested with care\n";
-    write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
-    _exit(-1);
-  }
-
   int fd;
   fd = client_connect(socket_path);
   if (fd == -1) {
@@ -312,6 +288,14 @@ int client_main(struct client *c) {
   // 创建新session
   char buf[100] = "new-session";
   send_server(MSG_COMMAND, fd, buf, strlen(buf) + 1);
+  // 发送 client 窗口尺寸
+  write(fd, &c->ws, sizeof(c->ws));
+  // 获取 server 主进程fd
+  c->master_fd = recv_fd(fd);
+  if (c->master_fd == -1) {
+    log_error("recv_fd failed");
+    return -1;
+  }
 
   // 终端窗口尺寸更新
   struct sigaction sa;

@@ -1,8 +1,11 @@
+#define _XOPEN_SOURCE 700
+#include "server.h"
 #include "client.h"
 #include "log.h"
 #include "main.h"
 #include "mini_tmux-protocol.h"
 #include "spawn.h"
+#include "util.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -15,9 +18,8 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
 extern char *socket_path;
-
+struct session *s = NULL;
 ssize_t read_n(int fd, void *buf, size_t n) {
   size_t recvd = 0;
   char *p = buf;
@@ -36,17 +38,25 @@ ssize_t read_n(int fd, void *buf, size_t n) {
 }
 
 void server_signal_handler(int sig) {
-  extern struct client client;
-  struct client *p = &client;
   int status;
   int ret;
   switch (sig) {
   // 回收子进程
   case SIGCHLD:
-    p->child_exited = 1;
-    ret = waitpid(client.slave_pid, &status, WNOHANG);
+    s->child_exited = 1;
+    ret = waitpid(s->slave_pid, &status, WNOHANG);
     break;
   }
+}
+
+void session_init(struct session *s) {
+  s->master_fd = -1;
+  s->slave_fd = -1;
+  s->slave_pid = -1;
+  s->child_exited = 0;
+
+  tcgetattr(STDIN_FILENO, &(s->orig_termios));
+  ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
 }
 
 void server_receive(int fd) {
@@ -66,12 +76,40 @@ void server_receive(int fd) {
   switch (hdr.type) {
   case MSG_COMMAND:
     if (strcmp(buf, "new-session") == 0) {
-      extern struct client client;
-      struct client *p = &client;
-      log_info("create a new session");
-      p->slave_pid = spawn_child(p);
+      // extern struct client client;
+      struct session *s = malloc(sizeof(struct session));
+      session_init(s);
+      s->master_fd = posix_openpt(O_RDWR);
+      if (s->master_fd == -1) {
+        log_error("posix_openpt failed: %s", strerror(errno));
+        _exit(-1);
+      }
+      // 传回client
+      // 解锁 slave 设备
+      grantpt(s->master_fd);
+      unlockpt(s->master_fd);
+      if (read(fd, &s->ws, sizeof(s->ws)) == -1) {
+        log_error("read winsize failed");
+        _exit(-1);
+      }
+      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);
 
-      if (p->slave_pid < 0) {
+      send_fd(fd, s->master_fd);
+      s->slave_name = ptsname(s->master_fd);
+      s->slave_fd = open(s->slave_name, O_RDWR);
+
+      // 不允许嵌套运行
+      if (client_check_nested()) {
+        char buff[100] = "sessions should be nested with care\n";
+        write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
+        _exit(-1);
+      }
+      // struct client *p = &client;
+      log_info("create a new session");
+
+      s->slave_pid = spawn_child(s);
+
+      if (s->slave_pid < 0) {
         log_error("spawn_child failed");
         _exit(-1);
       }
@@ -81,7 +119,7 @@ void server_receive(int fd) {
       sa.sa_flags = SA_RESTART;
       sigemptyset(&sa.sa_mask);
       sigaction(SIGCHLD, &sa, NULL);
-      log_info("spawned child process with pid %d", p->slave_pid);
+      log_info("spawned child process with pid %d", s->slave_pid);
     }
     break;
   case MSG_EXITED:
