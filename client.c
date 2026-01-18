@@ -1,3 +1,4 @@
+#include "mini_tmux-protocol.h"
 #define _GNU_SOURCE
 #include "client.h"
 #include "log.h"
@@ -287,9 +288,11 @@ int client_main(struct client *c) {
 
   // 创建新session
   char buf[100] = "new-session";
+  send_server(MSG_RESIZE, fd, &c->ws, sizeof(c->ws));
   send_server(MSG_COMMAND, fd, buf, strlen(buf) + 1);
-  // 发送 client 窗口尺寸
-  write(fd, &c->ws, sizeof(c->ws));
+
+  // // 发送 client 窗口尺寸
+  // write(fd, &c->ws, sizeof(c->ws));
   // 获取 server 主进程fd
   c->master_fd = recv_fd(fd);
   if (c->master_fd == -1) {

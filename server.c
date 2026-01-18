@@ -59,26 +59,31 @@ void session_init(struct session *s) {
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
 }
 
-void server_receive(int fd) {
+int server_receive(int fd) {
+  // 初始化session
+  if (s == NULL) {
+    s = malloc(sizeof(struct session));
+    session_init(s);
+  }
   struct msg_header hdr;
   if (read_n(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
     log_error("read header failed: %s", strerror(errno));
-    return;
+    return -1;
   }
 
   char *buf = malloc(hdr.len);
   if (read_n(fd, buf, hdr.len) != hdr.len) {
     log_error("read payload failed: %s", strerror(errno));
     free(buf);
-    return;
+    return -1;
   }
 
   switch (hdr.type) {
   case MSG_COMMAND:
     if (strcmp(buf, "new-session") == 0) {
       // extern struct client client;
-      struct session *s = malloc(sizeof(struct session));
-      session_init(s);
+      // struct session *s = malloc(sizeof(struct session));
+      // session_init(s);
       s->master_fd = posix_openpt(O_RDWR);
       if (s->master_fd == -1) {
         log_error("posix_openpt failed: %s", strerror(errno));
@@ -88,15 +93,11 @@ void server_receive(int fd) {
       // 解锁 slave 设备
       grantpt(s->master_fd);
       unlockpt(s->master_fd);
-      if (read(fd, &s->ws, sizeof(s->ws)) == -1) {
-        log_error("read winsize failed");
-        _exit(-1);
-      }
-      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);
 
       send_fd(fd, s->master_fd);
       s->slave_name = ptsname(s->master_fd);
       s->slave_fd = open(s->slave_name, O_RDWR);
+      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);  // 在 open 之后设置尺寸
 
       // 不允许嵌套运行
       if (client_check_nested()) {
@@ -122,19 +123,30 @@ void server_receive(int fd) {
       log_info("spawned child process with pid %d", s->slave_pid);
     }
     break;
+  case MSG_RESIZE:
+    log_debug("resize session");
+    memcpy(&s->ws, buf, sizeof(s->ws)); // 保存尺寸
+    if (s->slave_fd >= 0) {
+      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);
+    }
+    free(buf);
+    return 1;
   case MSG_EXITED:
     log_info("exit a session, pid:%d", buf);
+    break;
+
   default:
     log_warn("unknown msgtype %d", hdr.type);
   }
 
   free(buf);
+  return 1;
 }
 
 void server_loop(int listen_fd) {
   log_info("server loop started, listening on fd %d", listen_fd);
   while (1) {
-    int client_fd = accept(listen_fd, NULL, NULL);
+    int client_fd = accept(listen_fd, NULL, NULL); // 等待新连接，堵塞循环
     if (client_fd == -1) {
       if (errno == EINTR)
         continue;
@@ -142,8 +154,8 @@ void server_loop(int listen_fd) {
       break;
     }
     log_debug("accepted client fd %d", client_fd);
-    server_receive(client_fd);
-    close(client_fd);
+    while (server_receive(client_fd) == 1)
+      ;
   }
 }
 
