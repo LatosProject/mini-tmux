@@ -1,5 +1,6 @@
 #include "util.h"
 #include "client.h"
+#include "main.h"
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
@@ -20,6 +21,7 @@ int checkshell(const char *shell) {
 
 const char *getshell() {
   const char *shell;
+#ifndef MINI_TMUX_DEFAULT_SHELL
   shell = getenv("SHELL");
   if (checkshell(shell)) {
     return shell;
@@ -29,7 +31,7 @@ const char *getshell() {
   if (pw != NULL && checkshell(shell)) {
     return pw->pw_shell;
   }
-
+#endif
   return (_PATH_BSHELL);
 }
 
