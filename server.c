@@ -71,6 +71,17 @@ static struct session *find_session_by_client_fd(int fd) {
   return NULL;
 }
 
+// 根据 session id 查找 session
+static struct session *find_session_by_id(int id) {
+  struct session *sess;
+  list_for_each_entry(sess, &session_list, link) {
+    if (sess->id == id) {
+      return sess;
+    }
+  }
+  return NULL;
+}
+
 /*
   处理来自客户端的消息 (forked 子进程)
 */
@@ -171,13 +182,31 @@ int server_receive(int fd) {
     return -1;
     break;
   case MSG_DETACH:
-    log_info("detach a session");
-    sess = NULL;
-    sess = find_session_by_client_fd(fd);
-    sess->detached = 1;
-
+    if (hdr.len == 0) {
+      log_info("detach a session");
+      sess = NULL;
+      sess = find_session_by_client_fd(fd);
+      if (sess) {
+        sess->detached = 1;
+        log_debug("session id=%d marked as detached", sess->id);
+      }
+    } else {
+      // attach: 客户端发送的是二进制 int
+      int session_id;
+      memcpy(&session_id, buf, sizeof(session_id));
+      struct session *target = find_session_by_id(session_id);
+      if (target && target->detached) {
+        log_debug("attaching to detached session id=%d", target->id);
+        send_fd(fd, target->master_fd);
+        target->client_fd = fd;
+        target->detached = 0;
+      } else {
+        log_warn("attach failed: session %d not found or not detached", session_id);
+      }
+    }
     free(buf);
-    return 1;  // 返回 1，让 detach 处理代码来关闭 fd
+    return 1; // 返回 1，让 detach 处理代码来关闭 fd
+
   default:
     log_warn("unknown msgtype %d", hdr.type);
   }

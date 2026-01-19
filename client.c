@@ -331,15 +331,20 @@ int client_main(struct client *c) {
     return -1;
   }
   log_info("connected to server, fd %d", server_fd);
-
   // 保存 server 连接 fd
   c->server_fd = server_fd;
 
-  // 创建新session
-  char buf[100] = "new-session";
-  send_server(MSG_RESIZE, server_fd, &c->ws, sizeof(c->ws));
-  send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
+  extern int detached_session_id;
+  if (detached_session_id != -1) {
+    send_server(MSG_DETACH, server_fd, &detached_session_id,
+                sizeof(detached_session_id));
 
+  } else {
+    // 创建新session
+    char buf[100] = "new-session";
+    send_server(MSG_RESIZE, server_fd, &c->ws, sizeof(c->ws));
+    send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
+  }
   // 获取 server 主进程fd
   c->master_fd = recv_fd(server_fd);
   if (c->master_fd == -1) {
@@ -356,10 +361,11 @@ int client_main(struct client *c) {
   sigaction(SIGCHLD, &sa, NULL);
 
   dispatch_event(c, EV_ENABLE_RAW_MODE);
-
   log_info("entering client loop");
   client_loop(c);
 
+  char buf[100];
+  memset(buf, 0, sizeof(0));
   snprintf(buf, sizeof(buf), "%d", c->slave_pid);
   send_server(MSG_EXITED, server_fd, buf, strlen(buf) + 1);
   log_info("client exiting");

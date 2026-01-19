@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -12,8 +14,12 @@
 
 struct client client;
 char *socket_path;
-
+int detached_session_id = -1;
 int main(int argc, char *argv[]) {
+  if (argc == 3 && (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-S") == 0)) {
+    detached_session_id = strtol(argv[2], NULL, 10);  // 修改全局变量，不要重新声明
+    printf("attaching to session id=%d\n", detached_session_id);
+  }
   uid_t uid = getuid();
 
   // 创建目录
