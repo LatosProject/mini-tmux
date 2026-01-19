@@ -46,7 +46,13 @@ pid_t spawn_child(struct session *s) {
     dup2(s->slave_fd, STDIN_FILENO);
     dup2(s->slave_fd, STDOUT_FILENO);
     dup2(s->slave_fd, STDERR_FILENO);
-    close(s->slave_fd);
+
+    // 关闭所有继承的 fd（除了 0, 1, 2）
+    // 这样 server 的 client socket 不会被子进程持有
+    for (int fd = 3; fd < 1024; fd++) {
+      close(fd);
+    }
+
     execve(args[0], args, environ);
     perror("Execve failed");
     _exit(1); // Use _exit to avoid flushing stdio buffers again

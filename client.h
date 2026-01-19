@@ -23,6 +23,7 @@ typedef enum {
 
 struct client {
   client_state state;
+  int server_fd;    // 与 server 的连接 fd
   int master_fd;
   int slave_fd;
   pid_t slave_pid;

@@ -21,8 +21,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 extern char *socket_path;
-struct session *s = NULL;
 struct list_head session_list;
+static volatile sig_atomic_t sigchld_pending = 0;
 ssize_t read_n(int fd, void *buf, size_t n) {
   size_t recvd = 0;
   char *p = buf;
@@ -41,31 +41,16 @@ ssize_t read_n(int fd, void *buf, size_t n) {
 }
 
 void server_signal_handler(int sig) {
-  int status;
-  int ret;
-  pid_t pid;
   switch (sig) {
   case SIGCHLD:
-    // 循环回收所有退出的子进程
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-      // 遍历 session_list 找到对应的 session
-      struct list_head *pos;
-      list_for_each(pos, &session_list) {
-        struct session *sess = list_entry(pos, struct session, link);
-        if (sess->slave_pid == pid) {
-          sess->child_exited = 1;
-          close(sess->master_fd);
-          close(sess->slave_fd);
-          break;
-        }
-      }
-    }
+    sigchld_pending = 1;  // 只设置标志，主循环处理
     break;
   }
 }
 
 void session_init(struct session *s) {
   s->id = -1;
+  s->client_fd = -1;
   s->master_fd = -1;
   s->slave_fd = -1;
   s->slave_pid = -1;
@@ -75,17 +60,40 @@ void session_init(struct session *s) {
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
 }
 
+// 根据 client_fd 查找 session
+static struct session *find_session_by_client_fd(int fd) {
+  struct session *sess;
+  list_for_each_entry(sess, &session_list, link) {
+    if (sess->client_fd == fd) {
+      return sess;
+    }
+  }
+  return NULL;
+}
+
 /*
   处理来自客户端的消息 (forked 子进程)
 */
 int server_receive(int fd) {
-  // 初始化session， 用于第一次连接
-  if (s == NULL) {
-    log_debug("first connect");
-    s = malloc(sizeof(struct session));
-    session_init(s);
-    // 加在 forked子进程 链表，此时session_list 应该为空
-    list_add_tail(&s->link, &session_list);
+  // 先尝试根据 fd 查找已存在的 session
+  struct session *cur = find_session_by_client_fd(fd);
+
+  // 如果没找到，说明是新连接，立即创建新 session
+  if (cur == NULL) {
+    cur = malloc(sizeof(struct session));
+    session_init(cur);
+    cur->client_fd = fd;  // 立即绑定 client_fd
+
+    // 设置 session id
+    if (list_empty(&session_list)) {
+      cur->id = 0;  // 第一个 session
+    } else {
+      struct session *last =
+          list_last_entry(&session_list, struct session, link);
+      cur->id = last->id + 1;
+    }
+    list_add_tail(&cur->link, &session_list);
+    log_debug("created new session id=%d for fd=%d", cur->id, fd);
   }
 
   // 读取消息头
@@ -106,32 +114,21 @@ int server_receive(int fd) {
     // 处理命令
   case MSG_COMMAND:
     if (strcmp(buf, "new-session") == 0) {
-      // 如果是第二次或更多次连接，则创建新 session
-      if (!list_empty(&session_list)) {
-        // 链表非空，创建新 session，id = last->id + 1
-        struct session *last =
-            list_last_entry(&session_list, struct session, link);
-        s = malloc(sizeof(struct session));
-        session_init(s);
-        s->id = last->id + 1;
-        list_add_tail(&s->link, &session_list);
-      }
-
       // 创建伪终端
-      s->master_fd = posix_openpt(O_RDWR);
-      if (s->master_fd == -1) {
+      cur->master_fd = posix_openpt(O_RDWR);
+      if (cur->master_fd == -1) {
         log_error("posix_openpt failed: %s", strerror(errno));
         _exit(-1);
       }
       // 传回client
       // 解锁 slave 设备
-      grantpt(s->master_fd);
-      unlockpt(s->master_fd);
+      grantpt(cur->master_fd);
+      unlockpt(cur->master_fd);
 
-      send_fd(fd, s->master_fd);
-      s->slave_name = ptsname(s->master_fd);
-      s->slave_fd = open(s->slave_name, O_RDWR);
-      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);
+      send_fd(fd, cur->master_fd);
+      cur->slave_name = ptsname(cur->master_fd);
+      cur->slave_fd = open(cur->slave_name, O_RDWR);
+      ioctl(cur->slave_fd, TIOCSWINSZ, &cur->ws);
 
       // 不允许嵌套运行
       if (client_check_nested()) {
@@ -139,33 +136,38 @@ int server_receive(int fd) {
         write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
         _exit(-1);
       }
-      log_info("create a new session, id:%d", s->id);
+      log_info("create a new session, id:%d", cur->id);
 
-      s->slave_pid = spawn_child(s);
+      cur->slave_pid = spawn_child(cur);
 
-      if (s->slave_pid < 0) {
+      if (cur->slave_pid < 0) {
         log_error("spawn_child failed");
         _exit(-1);
       }
 
-      struct sigaction sa;
-      sa.sa_handler = server_signal_handler;
-      sa.sa_flags = SA_RESTART;
-      sigemptyset(&sa.sa_mask);
-      sigaction(SIGCHLD, &sa, NULL);
-      log_info("spawned child process with pid %d", s->slave_pid);
+      log_info("spawned child process with pid %d", cur->slave_pid);
     }
+    free(buf);
     return 1;
   case MSG_RESIZE:
     log_debug("resize session");
-    memcpy(&s->ws, buf, sizeof(s->ws)); // 保存尺寸
-    if (s->slave_fd >= 0) {
-      ioctl(s->slave_fd, TIOCSWINSZ, &s->ws);
+    if (cur == NULL) {
+      log_warn("MSG_RESIZE: session not found for fd %d", fd);
+      free(buf);
+      return 1;
+    }
+    memcpy(&cur->ws, buf, sizeof(cur->ws)); // 保存尺寸
+    if (cur->slave_fd >= 0) {
+      ioctl(cur->slave_fd, TIOCSWINSZ, &cur->ws);
     }
     free(buf);
     return 1;
   case MSG_EXITED:
     log_info("exit a session, pid:%s", buf);
+    struct session *sess;
+    list_for_each_entry(sess, &session_list, link) {
+      log_info("session id=%d, pid=%d", sess->id, sess->slave_pid);
+    }
     return -1;
     break;
 
@@ -182,6 +184,14 @@ int server_receive(int fd) {
 */
 void server_loop(int listen_fd) {
   log_info("server loop started, listening on fd %d", listen_fd);
+
+  // 在循环开始前设置信号处理器
+  struct sigaction sa;
+  sa.sa_handler = server_signal_handler;
+  sa.sa_flags = 0;  // 不用 SA_RESTART，让 select 被信号打断
+  sigemptyset(&sa.sa_mask);
+  sigaction(SIGCHLD, &sa, NULL);
+
   fd_set read_fds;
   int max_fd;
   int client_fds[MAX_CLIENTS] = {-1};
@@ -206,33 +216,79 @@ void server_loop(int listen_fd) {
     }
 
     // 阻塞，等待 fd 可读
+    int select_ok = 1;
     if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) < 0) {
       if (errno == EINTR) {
-        continue;
+        select_ok = 0;  // 不 continue，让后续代码检查 sigchld_pending
+      } else {
+        log_error("select failed: %s", strerror(errno));
+        break;
       }
-      log_error("select failed: %s", strerror(errno));
-      break;
     }
-    // 检查监听 fd是否可读，有新客户端连接
-    if (FD_ISSET(listen_fd, &read_fds)) {
-      int new_fd = accept(listen_fd, NULL, NULL);
-      if (new_fd >= 0) {
-        for (int i = 0; i < MAX_CLIENTS; i++) {
-          if (client_fds[i] == -1) {
-            client_fds[i] = new_fd;
-            break;
+
+    // 只有 select 成功时才处理 fd
+    if (select_ok) {
+      // 检查监听 fd是否可读，有新客户端连接
+      if (FD_ISSET(listen_fd, &read_fds)) {
+        int new_fd = accept(listen_fd, NULL, NULL);
+        if (new_fd >= 0) {
+          for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (client_fds[i] == -1) {
+              client_fds[i] = new_fd;
+              break;
+            }
+          }
+        }
+      }
+
+      for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (client_fds[i] >= 0 &&
+            FD_ISSET(client_fds[i], &read_fds)) { // 只处理"内核告诉你可读"的 fd"
+          // 客户端断开连接则关闭 fd
+          if (server_receive(client_fds[i]) < 0) {
+            close(client_fds[i]);
+            client_fds[i] = -1;
           }
         }
       }
     }
 
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-      if (client_fds[i] >= 0 &&
-          FD_ISSET(client_fds[i], &read_fds)) { // 只处理“内核告诉你可读”的 fd”
-        // 客户端断开连接则关闭 fd
-        if (server_receive(client_fds[i]) < 0) {
-          close(client_fds[i]);
-          client_fds[i] = -1;
+    // 无论 select 是否成功，都检查 sigchld_pending
+    if (sigchld_pending) {
+      sigchld_pending = 0;
+      // 回收所有退出的子进程
+      int status;
+      pid_t pid;
+      while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        struct session *sess;
+        list_for_each_entry(sess, &session_list, link) {
+          if (sess->slave_pid == pid) {
+            sess->child_exited = 1;
+            close(sess->master_fd);
+            close(sess->slave_fd);
+            // 关闭 client 连接，通知 client 退出
+            if (sess->client_fd >= 0) {
+              // 同步清理 client_fds 数组
+              for (int i = 0; i < MAX_CLIENTS; i++) {
+                if (client_fds[i] == sess->client_fd) {
+                  client_fds[i] = -1;
+                  break;
+                }
+              }
+              close(sess->client_fd);
+              sess->client_fd = -1;
+            }
+            break;
+          }
+        }
+      }
+      // 安全删除已退出的 session
+      struct session *sess, *tmp;
+      list_for_each_entry_safe(sess, tmp, &session_list, link) {
+        if (sess->child_exited) {
+          log_info("cleaning up session id=%d", sess->id);
+          list_del(&sess->link);
+          free(sess);
         }
       }
     }

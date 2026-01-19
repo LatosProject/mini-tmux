@@ -117,4 +117,34 @@ static inline int list_empty(const struct list_head *head)
 #define list_last_entry(head, type, member) \
     (list_empty(head) ? NULL : list_entry((head)->prev, type, member))
 
+/*
+ * iterate over each entry
+ */
+#define list_for_each_entry(pos, head, member) \
+    for (pos = list_entry((head)->next, typeof(*pos), member); \
+         &pos->member != (head); \
+         pos = list_entry(pos->member.next, typeof(*pos), member))
+
+/*
+ * iterate over each entry safe (allow delete)
+ */
+#define list_for_each_entry_safe(pos, n, head, member) \
+    for (pos = list_entry((head)->next, typeof(*pos), member), \
+         n = list_entry(pos->member.next, typeof(*pos), member); \
+         &pos->member != (head); \
+         pos = n, n = list_entry(n->member.next, typeof(*pos), member))
+
+/*
+ * count entries in list
+ */
+static inline size_t list_count(const struct list_head *head)
+{
+    size_t count = 0;
+    struct list_head *pos;
+    list_for_each(pos, head) {
+        count++;
+    }
+    return count;
+}
+
 #endif /* MINI_TMUX_LIST_H */

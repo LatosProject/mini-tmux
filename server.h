@@ -7,6 +7,7 @@
 int server_start() ;
 struct session {
   int id;
+  int client_fd;    // 关联的客户端连接 fd
   int master_fd;
   int slave_fd;
   pid_t slave_pid;

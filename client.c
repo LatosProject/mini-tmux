@@ -121,6 +121,7 @@ void signal_handler(int sig) {
 
 void client_init(struct client *c) {
   c->state = ST_BOOT;
+  c->server_fd = -1;
   c->master_fd = -1;
   c->slave_fd = -1;
   c->slave_pid = -1;
@@ -140,8 +141,11 @@ void client_loop(struct client *c) {
     FD_ZERO(&rfds);
     FD_SET(c->master_fd, &rfds);
     FD_SET(STDIN_FILENO, &rfds);
+    FD_SET(c->server_fd, &rfds); // 监听 server 连接
 
     maxfd = c->master_fd > STDIN_FILENO ? c->master_fd : STDIN_FILENO;
+    if (c->server_fd > maxfd)
+      maxfd = c->server_fd;
 
     int select_ok = 1;
     if (select(maxfd + 1, &rfds, NULL, NULL, NULL) < 0) {
@@ -167,6 +171,14 @@ void client_loop(struct client *c) {
 
     // 只有 select 成功时才检查 fd
     if (select_ok) {
+      // server 关闭连接，说明 session 结束
+      if (FD_ISSET(c->server_fd, &rfds)) {
+        char buf[1];
+        if (read(c->server_fd, buf, 1) <= 0) {
+          dispatch_event(c, EV_EOF_PTY);
+        }
+      }
+
       if (FD_ISSET(c->master_fd, &rfds)) {
         dispatch_event(c, EV_PTY_READ);
       }
@@ -286,6 +298,10 @@ int client_main(struct client *c) {
     return -1;
   }
   log_info("connected to server, fd %d", fd);
+
+  // 保存 server 连接 fd
+  c->server_fd = fd;
+
   // 创建新session
   char buf[100] = "new-session";
   send_server(MSG_RESIZE, fd, &c->ws, sizeof(c->ws));
@@ -301,7 +317,7 @@ int client_main(struct client *c) {
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;
-  sa.sa_flags = SA_RESTART;
+  sa.sa_flags = SA_RESTART; // restart就是收到信号打断后，重新执行被打断的函数
   sigemptyset(&sa.sa_mask);
   sigaction(SIGWINCH, &sa, NULL);
   sigaction(SIGCHLD, &sa, NULL);
