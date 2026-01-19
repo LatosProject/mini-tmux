@@ -368,12 +368,14 @@ int client_main(struct client *c) {
   c->master_fd = recv_fd(server_fd);
   if (c->master_fd == -1) {
     if (detached_session_id == -1) {
-    log_error("recv_fd failed");
-    return -1;
+      log_error("recv_fd failed");
+      return -1;
     } else {
       log_warn("attach failed: session %d not found or not detached",
                detached_session_id);
-}  }
+      return 0;
+    }
+  }
 
   // 终端窗口尺寸更新
   struct sigaction sa;
