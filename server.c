@@ -86,18 +86,66 @@ static struct session *find_session_by_id(int id) {
   处理来自客户端的消息 (forked 子进程)
 */
 int server_receive(int fd) {
-  // 先尝试根据 fd 查找已存在的 session
+  // 先读取消息头，判断消息类型
+  struct msg_header hdr;
+  if (read_n(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
+    log_error("read header failed: %s", strerror(errno));
+    return -1;
+  }
+
+  // 读取消息体
+  char *buf = NULL;
+  if (hdr.len > 0) {
+    buf = malloc(hdr.len);
+    if (read_n(fd, buf, hdr.len) != hdr.len) {
+      log_error("read payload failed: %s", strerror(errno));
+      free(buf);
+      return -1;
+    }
+  }
+
+  // MSG_LIST_SESSIONS 不需要创建 session，直接处理
+  if (hdr.type == MSG_LIST_SESSIONS) {
+    char response[4096] = {0};
+    int offset = 0;
+    struct session *s;
+    int count = 0;
+
+    list_for_each_entry(s, &session_list, link) {
+      // 只列出有效的 session（有 shell 进程的）
+      if (s->slave_pid > 0) {
+        count++;
+        const char *status = s->detached ? "detached" : "attached";
+        offset += snprintf(response + offset, sizeof(response) - offset,
+                           "%d: %s (pid %d)\n", s->id, status, s->slave_pid);
+      }
+    }
+
+    if (count == 0) {
+      snprintf(response, sizeof(response), "(no sessions)\n");
+    }
+
+    size_t len = strlen(response) + 1;
+    write(fd, &len, sizeof(len));
+    write(fd, response, len);
+
+    log_info("listed %d sessions", count);
+    free(buf);
+    return -1; // 关闭连接
+  }
+
+  // 其他消息类型需要关联 session
   struct session *cur = find_session_by_client_fd(fd);
 
-  // 如果没找到，说明是新连接，立即创建新 session
+  // 如果没找到，说明是新连接，创建新 session
   if (cur == NULL) {
     cur = malloc(sizeof(struct session));
     session_init(cur);
-    cur->client_fd = fd; // 立即绑定 client_fd
+    cur->client_fd = fd;
 
     // 设置 session id
     if (list_empty(&session_list)) {
-      cur->id = 0; // 第一个 session
+      cur->id = 0;
     } else {
       struct session *last =
           list_last_entry(&session_list, struct session, link);
@@ -107,19 +155,6 @@ int server_receive(int fd) {
     log_debug("created new session id=%d for fd=%d", cur->id, fd);
   }
 
-  // 读取消息头
-  struct msg_header hdr;
-  if (read_n(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-    log_error("read header failed: %s", strerror(errno));
-    return -1;
-  }
-  // 读取消息体
-  char *buf = malloc(hdr.len);
-  if (read_n(fd, buf, hdr.len) != hdr.len) {
-    log_error("read payload failed: %s", strerror(errno));
-    free(buf);
-    return -1;
-  }
   // 判断消息类型
   switch (hdr.type) {
     // 处理命令
@@ -201,7 +236,10 @@ int server_receive(int fd) {
         target->client_fd = fd;
         target->detached = 0;
       } else {
-        log_warn("attach failed: session %d not found or not detached", session_id);
+        log_warn("attach failed: session %d not found or not detached",
+                 session_id);
+        // 发送无效 fd
+        send_fd(fd, -1);
       }
     }
     free(buf);

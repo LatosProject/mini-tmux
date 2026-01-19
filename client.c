@@ -335,6 +335,25 @@ int client_main(struct client *c) {
   c->server_fd = server_fd;
 
   extern int detached_session_id;
+  extern int list_sessions;
+
+  // 列出所有 session
+  if (list_sessions) {
+    send_server(MSG_LIST_SESSIONS, server_fd, NULL, 0);
+    // 读取响应
+    size_t len;
+    if (read(server_fd, &len, sizeof(len)) > 0 && len > 0) {
+      char *response = malloc(len);
+      if (read(server_fd, response, len) > 0) {
+        printf("%s", response);
+      }
+      free(response);
+    }
+    close(server_fd);
+    log_close();
+    return 0;
+  }
+
   if (detached_session_id != -1) {
     send_server(MSG_DETACH, server_fd, &detached_session_id,
                 sizeof(detached_session_id));
@@ -348,9 +367,13 @@ int client_main(struct client *c) {
   // 获取 server 主进程fd
   c->master_fd = recv_fd(server_fd);
   if (c->master_fd == -1) {
+    if (detached_session_id == -1) {
     log_error("recv_fd failed");
     return -1;
-  }
+    } else {
+      log_warn("attach failed: session %d not found or not detached",
+               detached_session_id);
+}  }
 
   // 终端窗口尺寸更新
   struct sigaction sa;
