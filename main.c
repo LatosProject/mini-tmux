@@ -15,9 +15,26 @@
 struct client client;
 char *socket_path;
 int detached_session_id = -1;
+
+static void print_help(const char *prog) {
+  printf("Usage: %s [options]\n\n", prog);
+  printf("Options:\n");
+  printf("  -s <id>    Attach to detached session by id\n");
+  printf("  -h         Show this help message\n\n");
+  printf("Key bindings:\n");
+  printf("  Ctrl+B d   Detach from current session\n\n");
+  printf("Examples:\n");
+  printf("  %s           Start a new session\n", prog);
+  printf("  %s -s 0      Attach to session 0\n", prog);
+}
+
 int main(int argc, char *argv[]) {
+  if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+    print_help(argv[0]);
+    return 0;
+  }
   if (argc == 3 && (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-S") == 0)) {
-    detached_session_id = strtol(argv[2], NULL, 10);  // 修改全局变量，不要重新声明
+    detached_session_id = strtol(argv[2], NULL, 10);
     printf("attaching to session id=%d\n", detached_session_id);
   }
   uid_t uid = getuid();

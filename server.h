@@ -1,23 +1,56 @@
-#define MAX_CLIENTS 64 // 最大客户端连接数
+/**
+ * server.h - mini-tmux 服务端头文件
+ *
+ * 定义服务端相关的数据结构和接口，包括：
+ * - session 结构体：管理每个终端会话的状态
+ * - server_start：启动服务端守护进程
+ */
+
+#ifndef SERVER_H
+#define SERVER_H
+
+#define MAX_CLIENTS 64  // 最大客户端连接数
+
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <termios.h>
 #include "list.h"
-int server_start() ;
-struct session {
-  int id;
-  int client_fd;    // 关联的客户端连接 fd
-  int master_fd;
-  int slave_fd;
-  int detached;
-  pid_t slave_pid;
-  struct winsize ws;
-  struct termios orig_termios;
-  int child_exited;
-  struct termios raw;
-  char *slave_name;
-  struct environ *environ;
 
-  struct list_head link;
+/**
+ * 启动 mini-tmux 服务端
+ *
+ * 如果服务端尚未运行，则创建守护进程并启动服务端循环。
+ * 使用 Unix 域套接字监听客户端连接。
+ *
+ * @return 成功时返回连接到服务端的 fd，失败返回 -1
+ */
+int server_start(void);
+
+/**
+ * session - 终端会话结构体
+ *
+ * 每个 session 代表一个独立的伪终端会话，包含：
+ * - PTY 主从设备的文件描述符
+ * - 关联的 shell 子进程
+ * - 终端属性和窗口大小
+ * - 会话的分离/附加状态
+ */
+struct session {
+  int id;                       // 会话唯一标识符
+  int client_fd;                // 关联的客户端连接 fd（-1 表示无客户端）
+  int master_fd;                // PTY 主设备 fd（用于与 shell 通信）
+  int slave_fd;                 // PTY 从设备 fd（shell 的控制终端）
+  int detached;                 // 分离标志：1=已分离，0=已附加
+  pid_t slave_pid;              // shell 子进程 PID
+  struct winsize ws;            // 终端窗口大小（行数、列数）
+  struct termios orig_termios;  // 原始终端属性（用于恢复）
+  int child_exited;             // 子进程退出标志
+  struct termios raw;           // raw 模式终端属性
+  char *slave_name;             // PTY 从设备路径（如 /dev/pts/X）
+  struct environ *environ;      // 环境变量（未使用）
+
+  struct list_head link;        // 链表节点，用于连接到全局会话列表
 };
+
+#endif /* SERVER_H */
