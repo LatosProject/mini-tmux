@@ -238,8 +238,9 @@ int server_receive(int fd) {
       } else {
         log_warn("attach failed: session %d not found or not detached",
                  session_id);
-        // 发送无效 fd
-        send_fd(fd, -1);
+        // 发送失败标记：写入一个字节表示失败，不传递 fd
+        char fail = 0;
+        write(fd, &fail, 1);
       }
     }
     free(buf);

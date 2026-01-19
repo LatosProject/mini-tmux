@@ -69,11 +69,11 @@ int send_fd(int sock, int fd) {
 
   struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
   cmsg->cmsg_level = SOL_SOCKET;
-  cmsg->cmsg_type = SCM_RIGHTS; // 关键：传递文件描述符
+  cmsg->cmsg_type = SCM_RIGHTS; // 传递文件描述符
   cmsg->cmsg_len = CMSG_LEN(sizeof(int));
   *(int *)CMSG_DATA(cmsg) = fd; // 把 fd 放进去
 
-  return sendmsg(sock, &msg, 0) >= 0 ? 0 : -1;
+  return sendmsg(sock, &msg, 0) >= 0 ? 0 : -1; // fd内核检查
 }
 
 int recv_fd(int sock) {
@@ -89,7 +89,7 @@ int recv_fd(int sock) {
   msg.msg_control = cmsgbuf;
   msg.msg_controllen = sizeof(cmsgbuf);
 
-  if (recvmsg(sock, &msg, 0) < 0)
+  if (recvmsg(sock, &msg, 0) < 0) // fd内核验证
     return -1;
 
   struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
