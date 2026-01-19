@@ -1,3 +1,4 @@
+#define MAX_CLIENTS 64 // 最大客户端连接数
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>

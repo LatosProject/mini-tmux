@@ -291,8 +291,6 @@ int client_main(struct client *c) {
   send_server(MSG_RESIZE, fd, &c->ws, sizeof(c->ws));
   send_server(MSG_COMMAND, fd, buf, strlen(buf) + 1);
 
-  // // 发送 client 窗口尺寸
-  // write(fd, &c->ws, sizeof(c->ws));
   // 获取 server 主进程fd
   c->master_fd = recv_fd(fd);
   if (c->master_fd == -1) {

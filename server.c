@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -55,40 +56,48 @@ void server_signal_handler(int sig) {
 }
 
 void session_init(struct session *s) {
+  s->id = -1;
   s->master_fd = -1;
   s->slave_fd = -1;
   s->slave_pid = -1;
   s->child_exited = 0;
   list_init(&s->link);
-  list_add_tail(&s->link, &session_list);
   tcgetattr(STDIN_FILENO, &(s->orig_termios));
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
 }
 
+/*
+  处理来自客户端的消息 (forked 子进程)
+*/
 int server_receive(int fd) {
-  // 初始化session
+  // 初始化session， 用于第一次连接
   if (s == NULL) {
+    log_debug("first connect");
     s = malloc(sizeof(struct session));
     session_init(s);
-    s->id = 0;
+    // 加在 forked子进程 链表，此时session_list 应该为空
     list_add_tail(&s->link, &session_list);
   }
+
+  // 读取消息头
   struct msg_header hdr;
   if (read_n(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
     log_error("read header failed: %s", strerror(errno));
     return -1;
   }
-
+  // 读取消息体
   char *buf = malloc(hdr.len);
   if (read_n(fd, buf, hdr.len) != hdr.len) {
     log_error("read payload failed: %s", strerror(errno));
     free(buf);
     return -1;
   }
-
+  // 判断消息类型
   switch (hdr.type) {
+    // 处理命令
   case MSG_COMMAND:
     if (strcmp(buf, "new-session") == 0) {
+      // 如果是第二次或更多次连接，则创建新 session
       if (!list_empty(&session_list)) {
         // 链表非空，创建新 session，id = last->id + 1
         struct session *last =
@@ -98,8 +107,8 @@ int server_receive(int fd) {
         s->id = last->id + 1;
         list_add_tail(&s->link, &session_list);
       }
-      // 否则用已有的 s（id=0），但也需要加入链表
 
+      // 创建伪终端
       s->master_fd = posix_openpt(O_RDWR);
       if (s->master_fd == -1) {
         log_error("posix_openpt failed: %s", strerror(errno));
@@ -121,7 +130,6 @@ int server_receive(int fd) {
         write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
         _exit(-1);
       }
-      // struct client *p = &client;
       log_info("create a new session, id:%d", s->id);
 
       s->slave_pid = spawn_child(s);
@@ -138,7 +146,7 @@ int server_receive(int fd) {
       sigaction(SIGCHLD, &sa, NULL);
       log_info("spawned child process with pid %d", s->slave_pid);
     }
-    break;
+    return 1;
   case MSG_RESIZE:
     log_debug("resize session");
     memcpy(&s->ws, buf, sizeof(s->ws)); // 保存尺寸
@@ -159,47 +167,89 @@ int server_receive(int fd) {
   return 1;
 }
 
+/*
+  服务器主循环，监听客户端连接请求
+*/
 void server_loop(int listen_fd) {
   log_info("server loop started, listening on fd %d", listen_fd);
+  fd_set read_fds;
+  int max_fd;
+  int client_fds[MAX_CLIENTS] = {-1};
+  // 初始化客户端 fd 数组
+  for (int i = 0; i < MAX_CLIENTS; i++) {
+    client_fds[i] = -1;
+  }
   while (1) {
-    int client_fd = accept(listen_fd, NULL, NULL); // 等待新连接，堵塞循环
-    if (client_fd == -1) {
-      if (errno == EINTR)
+    FD_ZERO(&read_fds);
+    FD_SET(listen_fd, &read_fds); // 添加监听 fd
+    max_fd = listen_fd;
+
+    // 当client_fds不为空时，把client_fds加入监听集合
+    // 添加所有已连接的客户端 fd
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+      if (client_fds[i] >= 0) {
+        FD_SET(client_fds[i], &read_fds);
+        if (client_fds[i] > max_fd) {
+          max_fd = client_fds[i];
+        }
+      }
+    }
+
+    // 阻塞，等待 fd 可读
+    if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) < 0) {
+      if (errno == EINTR) {
         continue;
-      log_error("accept failed: %s", strerror(errno));
+      }
+      log_error("select failed: %s", strerror(errno));
       break;
     }
-    log_debug("accepted client fd %d", client_fd);
-    // fork一个子进程专门处理client请求，父进程继续监听。用于多client场景
-    pid_t pid = fork();
-    if (pid == 0) {
-      close(listen_fd); // 子进程不需要监听
-      while (server_receive(client_fd) == 1)
-        ;
-    } else {
-      close(client_fd); // 父进程不需要处理client请求
+    // 检查监听 fd是否可读，有新客户端连接
+    if (FD_ISSET(listen_fd, &read_fds)) {
+      int new_fd = accept(listen_fd, NULL, NULL);
+      if (new_fd >= 0) {
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+          if (client_fds[i] == -1) {
+            client_fds[i] = new_fd;
+            break;
+          }
+        }
+      }
+    }
+
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+      if (client_fds[i] >= 0 &&
+          FD_ISSET(client_fds[i], &read_fds)) { // 只处理“内核告诉你可读”的 fd”
+        // 客户端断开连接则关闭 fd
+        if (server_receive(client_fds[i]) < 0) {
+          close(client_fds[i]);
+          client_fds[i] = -1;
+        }
+      }
     }
   }
 }
 
+/*
+  服务器启动函数，返回连接到服务器的客户端socket fd
+*/
 int server_start() {
+  // 初始化 session 链表
   list_init(&session_list);
   sigset_t set, oldset;
   log_info("server is starting");
 
-  // 创建 Unix 域套接字
+  // 创建 unix 套接字，用于客户端连接
   int listen_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (listen_fd == -1) {
     log_error("socket failed: %s", strerror(errno));
     return -1;
   }
-
   struct sockaddr_un sa;
   memset(&sa, 0, sizeof(sa));
   sa.sun_family = AF_UNIX;
   strncpy(sa.sun_path, socket_path, sizeof(sa.sun_path) - 1);
 
-  // 绑定到路径
+  // 绑定 socket
   if (bind(listen_fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
     log_error("bind failed: %s", strerror(errno));
     close(listen_fd);
@@ -207,15 +257,49 @@ int server_start() {
   }
   log_debug("bound to %s", socket_path);
 
+  // 监听客户端连接
   if (listen(listen_fd, 5) == -1) {
     log_error("listen failed: %s", strerror(errno));
     close(listen_fd);
     return -1;
   }
 
+  // 阻塞所有信号，防止 fork 出错
   sigfillset(&set);
   sigprocmask(SIG_BLOCK, &set, &oldset);
 
+  /*
+    fork流程图如下：
+
+    parent (wait for child1)
+      |
+      |-- fork() --> child1
+                        |
+                        |-- setsid()
+                        |
+                        |-- fork() --> child2 (daemon)
+                                           |
+                                           |-- parent (child1) exits
+                                           |
+                                           |-- child2 (daemon)
+                                                 |
+                                                 |-- umask(0)
+                                                 |-- close stdio, redirect to
+    /dev/null
+                                                 |-- sigprocmask(SIG_SETMASK,
+    &oldset, NULL)
+                                                 |-- log_init
+                                                 |-- server_loop(listen_fd)
+                                                 |-- close(listen_fd)
+                                                 |-- log_close()
+                                                 |-- _exit(0)
+      |
+      |-- parent waits for child1 to exit
+      |-- parent closes listen_fd
+      |-- parent connects to server as client
+  */
+
+  // fork 出守护进程
   pid_t pid = fork();
   if (pid < 0) {
     log_error("fork failed: %s", strerror(errno));
@@ -224,24 +308,25 @@ int server_start() {
     return -1;
   }
   if (pid == 0) {
-    // 成为守护进程
-
+    // 服务端守护进程
+    // 创建新会话，脱离控制终端
     if (setsid() == -1) {
       log_error("setsid failed: %s", strerror(errno));
       _exit(1);
     }
 
-    //  二次 fork，确保不能重新获取控制终端
+    // 二次fork，防止进程重新获得控制终端
     pid_t pid2 = fork();
     if (pid2 < 0) {
       _exit(1);
     }
+
     if (pid2 > 0) {
       // 第一个子进程退出，让子进程成为真正的守护进程
       _exit(0);
     }
 
-    // 设置文件权限掩码
+    // 设置文件权限掩码，确保读写权限
     umask(0);
 
     // 关闭标准输入输出，重定向到 /dev/null
@@ -251,22 +336,30 @@ int server_start() {
     open("/dev/null", O_RDONLY); // stdin  -> fd 0
     open("/dev/null", O_WRONLY); // stdout -> fd 1
     open("/dev/null", O_WRONLY); // stderr -> fd 2
-
+                                 //
+    // 恢复信号掩码
     sigprocmask(SIG_SETMASK, &oldset, NULL);
+
+    // 服务器启动完毕
     log_init("server");
     log_info("server daemon started, pid %d", getpid());
+
+    // 进入服务器主循环
     server_loop(listen_fd);
     close(listen_fd);
     log_close();
     _exit(0);
   } else {
+
     // 等待第一个子进程退出（它会立即退出，子进程继续运行）
     waitpid(pid, NULL, 0);
-    // 父进程：client，连接到 server
+
+    // 恢复parent进程信号掩码
     sigprocmask(SIG_SETMASK, &oldset, NULL);
     close(listen_fd);
 
     // 连接到刚创建的 server
+    // 只用于获取 child2 的 fd
     int client_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (client_fd == -1) {
       log_error("client socket failed: %s", strerror(errno));
@@ -278,6 +371,6 @@ int server_start() {
       return -1;
     }
     log_debug("connected to server, fd %d", client_fd);
-    return client_fd;
+    return client_fd; // 获取 child2 的fd，返回到 client 进程
   }
 }
