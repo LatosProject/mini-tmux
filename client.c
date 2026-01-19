@@ -166,7 +166,7 @@ void act_resize(struct client *c, client_event ev) {
 void act_child_exit(struct client *c, client_event ev) {
   c->child_exited = 1;
   char msg[100] = {0};
-  snprintf(msg, sizeof(msg), "Child exited with PID: %d\n", c->slave_pid);
+  snprintf(msg, sizeof(msg), "\nChild exited with PID: %d", c->slave_pid);
   write(STDOUT_FILENO, msg, strlen(msg));
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
 }

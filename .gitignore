@@ -8,3 +8,5 @@ CMakeFiles/
 .claude
 Makefile
 cmake_install.cmake
+.cache
+build
