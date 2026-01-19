@@ -154,4 +154,4 @@ struct msg_header {
 
 ## License
 
-MIT
+[MIT](LICENSE)
