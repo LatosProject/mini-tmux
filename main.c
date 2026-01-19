@@ -13,7 +13,7 @@
 struct client client;
 char *socket_path;
 
-int main() {
+int main(int argc, char *argv[]) {
   uid_t uid = getuid();
 
   // 创建目录

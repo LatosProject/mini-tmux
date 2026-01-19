@@ -43,7 +43,7 @@ ssize_t read_n(int fd, void *buf, size_t n) {
 void server_signal_handler(int sig) {
   switch (sig) {
   case SIGCHLD:
-    sigchld_pending = 1;  // 只设置标志，主循环处理
+    sigchld_pending = 1; // 只设置标志，主循环处理
     break;
   }
 }
@@ -82,11 +82,11 @@ int server_receive(int fd) {
   if (cur == NULL) {
     cur = malloc(sizeof(struct session));
     session_init(cur);
-    cur->client_fd = fd;  // 立即绑定 client_fd
+    cur->client_fd = fd; // 立即绑定 client_fd
 
     // 设置 session id
     if (list_empty(&session_list)) {
-      cur->id = 0;  // 第一个 session
+      cur->id = 0; // 第一个 session
     } else {
       struct session *last =
           list_last_entry(&session_list, struct session, link);
@@ -170,7 +170,14 @@ int server_receive(int fd) {
     }
     return -1;
     break;
+  case MSG_DETACH:
+    log_info("detach a session");
+    sess = NULL;
+    sess = find_session_by_client_fd(fd);
+    sess->detached = 1;
 
+    free(buf);
+    return 1;  // 返回 1，让 detach 处理代码来关闭 fd
   default:
     log_warn("unknown msgtype %d", hdr.type);
   }
@@ -188,7 +195,7 @@ void server_loop(int listen_fd) {
   // 在循环开始前设置信号处理器
   struct sigaction sa;
   sa.sa_handler = server_signal_handler;
-  sa.sa_flags = 0;  // 不用 SA_RESTART，让 select 被信号打断
+  sa.sa_flags = 0; // 不用 SA_RESTART，让 select 被信号打断
   sigemptyset(&sa.sa_mask);
   sigaction(SIGCHLD, &sa, NULL);
 
@@ -219,7 +226,7 @@ void server_loop(int listen_fd) {
     int select_ok = 1;
     if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) < 0) {
       if (errno == EINTR) {
-        select_ok = 0;  // 不 continue，让后续代码检查 sigchld_pending
+        select_ok = 0; // 不 continue，让后续代码检查 sigchld_pending
       } else {
         log_error("select failed: %s", strerror(errno));
         break;
@@ -243,13 +250,34 @@ void server_loop(int listen_fd) {
 
       for (int i = 0; i < MAX_CLIENTS; i++) {
         if (client_fds[i] >= 0 &&
-            FD_ISSET(client_fds[i], &read_fds)) { // 只处理"内核告诉你可读"的 fd"
+            FD_ISSET(client_fds[i],
+                     &read_fds)) { // 只处理"内核告诉你可读"的 fd"
           // 客户端断开连接则关闭 fd
           if (server_receive(client_fds[i]) < 0) {
             close(client_fds[i]);
             client_fds[i] = -1;
           }
         }
+      }
+    }
+
+    // 处理 detach 的 session
+    struct session *sess;
+    list_for_each_entry(sess, &session_list, link) {
+      if (sess->detached == 1) {
+        // 先从 client_fds 数组中移除(此时 sess->client_fd 还保存着旧值)
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+          if (client_fds[i] == sess->client_fd) {
+            client_fds[i] = -1; // 清空槽位,防止 fd 复用时冲突
+            break;
+          }
+        }
+
+        // 关闭客户端连接(但保持 PTY 和 shell 继续运行)
+        close(sess->client_fd);
+        sess->client_fd = -1; // 标记 session 已没有客户端连接
+
+        log_info("session %d detached, shell continues running", sess->id);
       }
     }
 

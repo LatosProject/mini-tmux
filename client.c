@@ -22,6 +22,8 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+
+int server_fd;
 extern char *socket_path;
 volatile sig_atomic_t sigwinch_pending,
     sigchld_pending = 0; // C 语言唯一保证信号读写安全的类型
@@ -35,7 +37,8 @@ static const state_transition table[] = {
     {ST_EXITING, EV_PTY_READ, ST_EXITING, NULL},
     {ST_RUNNING, EV_EOF_PTY, ST_EXITING, act_child_exit},
     {ST_RUNNING, EV_EOF_STDIN, ST_EXITING, NULL},
-    {ST_RUNNING, EV_INTERRUPT, ST_EXITING, NULL}};
+    {ST_RUNNING, EV_INTERRUPT, ST_EXITING, NULL},
+    {ST_RUNNING, EV_DETACHED, ST_EXITING, act_detach}};
 
 #define NTRANS (sizeof(table) / sizeof(table[0]))
 
@@ -51,6 +54,104 @@ void dispatch_event(struct client *c, client_event ev) {
     }
   }
   log_warn("FSM unhandled event %d in state %d", ev, c->state);
+}
+static int client_get_lock(char *lockfile) {
+  int lockfd;
+  log_debug("lock file is %s", lockfile);
+
+  if ((lockfd = open(lockfile, O_RDWR | O_CREAT, 0600)) == -1) {
+    log_error("open lock file failed: %s", strerror(errno));
+    return -1;
+  }
+
+  if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
+    log_debug("flock failed: %s", strerror(errno));
+    if (errno != EAGAIN)
+      return lockfd;
+    // 信号阻塞等待
+    while (flock(lockfd, LOCK_EX) == -1 && errno == EINTR)
+      ;
+    close(lockfd);
+    return -2;
+  }
+  log_debug("flock succeeded");
+  return lockfd;
+}
+
+static int client_connect(const char *path) {
+  struct sockaddr_un sa;
+  int fd, lockfd = -1;
+  int locked = 0;
+  char buf[100] = {0};
+  char *lockfile = NULL;
+
+  // 将一段内存全部设置为指定的字节值
+  memset(&sa, 0, sizeof(sa));
+  sa.sun_family = AF_UNIX;
+  strlcpy(sa.sun_path, path, sizeof(sa.sun_path));
+
+  if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    log_error("socket failed: %s", strerror(errno));
+    return -1;
+  }
+  log_debug("socket path is %s", path);
+  log_debug("trying connect");
+  if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+    log_debug("connect failed: %s", strerror(errno));
+    close(fd);
+    if (!locked) {
+      snprintf(buf, sizeof(buf), "%s.lock", path);
+      lockfile = buf;
+      if ((lockfd = client_get_lock(lockfile)) < 0) {
+        log_debug("didn't get lock %d", lockfd);
+      }
+    }
+    // lock标识符存在，无法删除目录项，且失败原因不是文件夹不存在
+    if (lockfd >= 0 && unlink(path) != 0 && errno != ENOENT) {
+      close(lockfd);
+      return -1;
+    }
+    log_debug("got lock %d", lockfd);
+    // 连接失败后新建
+    fd = server_start();
+  } else {
+    log_debug("connected sucessfully");
+  }
+  if (locked && lockfd >= 0) {
+    close(lockfd);
+  }
+  return fd;
+}
+
+int send_server(enum msgtype type, int fd, const void *buf, size_t len) {
+  struct msg_header hdr = {type, len};
+  ssize_t n;
+  const char *ph = (const char *)&hdr;
+  // 发送 header
+  size_t sent = 0;
+  while (sent < sizeof(hdr)) {
+    ssize_t n = write(fd, ph + sent, sizeof(hdr) - sent);
+    if (n == -1) {
+      if (errno == EINTR)
+        continue; // 被信号打断，重试
+      return -1;
+    }
+    sent += n;
+  }
+
+  // 发送数据
+  const char *p = buf;
+  sent = 0;
+  while (sent < len) {
+    ssize_t n = write(fd, p + sent, len - sent);
+    if (n == -1) {
+      if (errno == EINTR)
+        continue; // 被信号打断，重试
+      return -1;
+    }
+    sent += n;
+  }
+  return 0;
 }
 
 void act_resize(struct client *c, client_event ev) {
@@ -94,12 +195,42 @@ void act_stdin_read(struct client *c, client_event ev) {
     dispatch_event(c, EV_EOF_STDIN);
     return;
   }
-  write(c->master_fd, buff, n);
+
+  // 检测 Ctrl+B D 快捷键序列进行 detach
+  // Ctrl+B = 0x02, D/d = 0x44/0x64
+  static int ctrl_b_pressed = 0;
+
+  for (ssize_t i = 0; i < n; i++) {
+    if (buff[i] == 0x02) { // ctrl+b
+      ctrl_b_pressed = 1;
+      continue;
+    }
+
+    if (ctrl_b_pressed) {
+      if (buff[i] == 'd' || buff[i] == 'D') {
+        ctrl_b_pressed = 0;
+        dispatch_event(c, EV_DETACHED);
+        return;
+      } else {
+        char cb = 0x02;
+        write(c->master_fd, &cb, 1);
+        write(c->master_fd, &buff[i], 1);
+        ctrl_b_pressed = 0;
+      }
+    } else {
+      write(c->master_fd, &buff[i], 1);
+    }
+  }
 }
 
+void act_detach(struct client *c, client_event ev) {
+  send_server(MSG_DETACH, server_fd, NULL, 0);
+  c->child_exited = 1;
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
+}
 /*
- * Signal handlers are async and may interrupt execution at arbitrary points.
- * Only set flags here; handle logic in main loop.
+ * Signal handlers are async and may interrupt execution at arbitrary
+ * points. Only set flags here; handle logic in main loop.
  */
 void signal_handler(int sig) {
   extern struct client client;
@@ -189,126 +320,28 @@ void client_loop(struct client *c) {
     }
   }
 }
-static int client_get_lock(char *lockfile) {
-  int lockfd;
-  log_debug("lock file is %s", lockfile);
-
-  if ((lockfd = open(lockfile, O_RDWR | O_CREAT, 0600)) == -1) {
-    log_error("open lock file failed: %s", strerror(errno));
-    return -1;
-  }
-
-  if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
-    log_debug("flock failed: %s", strerror(errno));
-    if (errno != EAGAIN)
-      return lockfd;
-    // 信号阻塞等待
-    while (flock(lockfd, LOCK_EX) == -1 && errno == EINTR)
-      ;
-    close(lockfd);
-    return -2;
-  }
-  log_debug("flock succeeded");
-  return lockfd;
-}
-static int client_connect(const char *path) {
-  struct sockaddr_un sa;
-  int fd, lockfd = -1;
-  int locked = 0;
-  char buf[100] = {0};
-  char *lockfile = NULL;
-
-  // 将一段内存全部设置为指定的字节值
-  memset(&sa, 0, sizeof(sa));
-  sa.sun_family = AF_UNIX;
-  strlcpy(sa.sun_path, path, sizeof(sa.sun_path));
-
-  if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-    log_error("socket failed: %s", strerror(errno));
-    return -1;
-  }
-  log_debug("socket path is %s", path);
-  log_debug("trying connect");
-  if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
-    log_debug("connect failed: %s", strerror(errno));
-    close(fd);
-    if (!locked) {
-      snprintf(buf, sizeof(buf), "%s.lock", path);
-      lockfile = buf;
-      if ((lockfd = client_get_lock(lockfile)) < 0) {
-        log_debug("didn't get lock %d", lockfd);
-      }
-    }
-    // lock标识符存在，无法删除目录项，且失败原因不是文件夹不存在
-    if (lockfd >= 0 && unlink(path) != 0 && errno != ENOENT) {
-      close(lockfd);
-      return -1;
-    }
-    log_debug("got lock %d", lockfd);
-    // 连接失败后新建
-    fd = server_start();
-  } else {
-    log_debug("connected sucessfully");
-  }
-  if (locked && lockfd >= 0) {
-    close(lockfd);
-  }
-  return fd;
-}
-
-int send_server(enum msgtype type, int fd, const void *buf, size_t len) {
-  struct msg_header hdr = {type, len};
-  ssize_t n;
-  const char *ph = (const char *)&hdr;
-  // 发送 header
-  size_t sent = 0;
-  while (sent < sizeof(hdr)) {
-    ssize_t n = write(fd, ph + sent, sizeof(hdr) - sent);
-    if (n == -1) {
-      if (errno == EINTR)
-        continue; // 被信号打断，重试
-      return -1;
-    }
-    sent += n;
-  }
-
-  // 发送数据
-  const char *p = buf;
-  sent = 0;
-  while (sent < len) {
-    ssize_t n = write(fd, p + sent, len - sent);
-    if (n == -1) {
-      if (errno == EINTR)
-        continue; // 被信号打断，重试
-      return -1;
-    }
-    sent += n;
-  }
-  return 0;
-}
 
 int client_main(struct client *c) {
   log_init("client");
   log_info("client starting");
 
-  int fd;
-  fd = client_connect(socket_path);
-  if (fd == -1) {
+  server_fd = client_connect(socket_path);
+  if (server_fd == -1) {
     log_error("client connect failed");
     return -1;
   }
-  log_info("connected to server, fd %d", fd);
+  log_info("connected to server, fd %d", server_fd);
 
   // 保存 server 连接 fd
-  c->server_fd = fd;
+  c->server_fd = server_fd;
 
   // 创建新session
   char buf[100] = "new-session";
-  send_server(MSG_RESIZE, fd, &c->ws, sizeof(c->ws));
-  send_server(MSG_COMMAND, fd, buf, strlen(buf) + 1);
+  send_server(MSG_RESIZE, server_fd, &c->ws, sizeof(c->ws));
+  send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
 
   // 获取 server 主进程fd
-  c->master_fd = recv_fd(fd);
+  c->master_fd = recv_fd(server_fd);
   if (c->master_fd == -1) {
     log_error("recv_fd failed");
     return -1;
@@ -328,7 +361,7 @@ int client_main(struct client *c) {
   client_loop(c);
 
   snprintf(buf, sizeof(buf), "%d", c->slave_pid);
-  send_server(MSG_EXITED, fd, buf, strlen(buf) + 1);
+  send_server(MSG_EXITED, server_fd, buf, strlen(buf) + 1);
   log_info("client exiting");
   log_close();
   return 0;

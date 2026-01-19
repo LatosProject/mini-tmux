@@ -10,6 +10,7 @@ struct session {
   int client_fd;    // 关联的客户端连接 fd
   int master_fd;
   int slave_fd;
+  int detached;
   pid_t slave_pid;
   struct winsize ws;
   struct termios orig_termios;

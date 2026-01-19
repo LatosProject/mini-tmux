@@ -18,7 +18,8 @@ typedef enum {
   EV_INTERRUPT,
   EV_EOF_STDIN,
   EV_EOF_PTY,
-  EV_ENABLE_RAW_MODE
+  EV_ENABLE_RAW_MODE,
+  EV_DETACHED
 } client_event;
 
 struct client {
@@ -51,3 +52,4 @@ void act_child_exit(struct client *C, client_event ev);
 void act_enable_raw_mode(struct client *C, client_event ev);
 void act_pty_read(struct client *c, client_event ev);
 void act_stdin_read(struct client *c, client_event ev);
+void act_detach(struct client *c, client_event ev);
