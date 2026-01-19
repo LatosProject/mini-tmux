@@ -359,6 +359,12 @@ int client_main(struct client *c) {
                 sizeof(detached_session_id));
 
   } else {
+    // 不允许嵌套运行
+    if (client_check_nested()) {
+      char buff[100] = "sessions should be nested with care\n";
+      write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
+      _exit(-1);
+    }
     // 创建新session
     char buf[100] = "new-session";
     send_server(MSG_RESIZE, server_fd, &c->ws, sizeof(c->ws));

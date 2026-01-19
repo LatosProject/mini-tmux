@@ -1,5 +1,6 @@
 #include "main.h"
 #include "client.h"
+#include "log.h"
 #include "spawn.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
   }
   if (argc == 3 && (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-S") == 0)) {
     detached_session_id = strtol(argv[2], NULL, 10);
-    printf("attaching to session id=%d\n", detached_session_id);
+    log_info("attaching to session id=%d\n", detached_session_id);
   }
   uid_t uid = getuid();
 

@@ -176,12 +176,6 @@ int server_receive(int fd) {
       cur->slave_fd = open(cur->slave_name, O_RDWR);
       ioctl(cur->slave_fd, TIOCSWINSZ, &cur->ws);
 
-      // 不允许嵌套运行
-      if (client_check_nested()) {
-        char buff[100] = "sessions should be nested with care\n";
-        write(STDOUT_FILENO, buff, (int)strlen(buff) + 1);
-        _exit(-1);
-      }
       log_info("create a new session, id:%d", cur->id);
 
       cur->slave_pid = spawn_child(cur);
