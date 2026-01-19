@@ -43,14 +43,23 @@ ssize_t read_n(int fd, void *buf, size_t n) {
 void server_signal_handler(int sig) {
   int status;
   int ret;
+  pid_t pid;
   switch (sig) {
-  // 回收子进程
   case SIGCHLD:
-    s->child_exited = 1;
-    ret = waitpid(s->slave_pid, &status, WNOHANG);
-    // 收回子进程，client返回eof
-    close(s->master_fd);
-    close(s->slave_fd);
+    // 循环回收所有退出的子进程
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+      // 遍历 session_list 找到对应的 session
+      struct list_head *pos;
+      list_for_each(pos, &session_list) {
+        struct session *sess = list_entry(pos, struct session, link);
+        if (sess->slave_pid == pid) {
+          sess->child_exited = 1;
+          close(sess->master_fd);
+          close(sess->slave_fd);
+          break;
+        }
+      }
+    }
     break;
   }
 }
@@ -156,7 +165,8 @@ int server_receive(int fd) {
     free(buf);
     return 1;
   case MSG_EXITED:
-    log_info("exit a session, pid:%d", buf);
+    log_info("exit a session, pid:%s", buf);
+    return -1;
     break;
 
   default:
