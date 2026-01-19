@@ -19,7 +19,7 @@ int detached_session_id = -1;
 int list_sessions = 0;
 
 static void print_help(const char *prog) {
-  printf("mini-tmux - a minimal terminal multiplexer\n\n");
+  printf("\nmini-tmux - a minimal terminal multiplexer\n\n");
   printf("        Version: 0.1.0 By Latos\n\n");
   printf("Usage: %s [options]\n\n", prog);
   printf("Options:\n");

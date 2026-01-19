@@ -115,7 +115,7 @@ int server_receive(int fd) {
       // 只列出有效的 session（有 shell 进程的）
       if (s->slave_pid > 0) {
         count++;
-        const char *status = s->detached ? "detached" : "attached";
+        const char *status = s->detached ? "\ndetached" : "\nattached";
         offset += snprintf(response + offset, sizeof(response) - offset,
                            "%d: %s (pid %d)\n", s->id, status, s->slave_pid);
       }

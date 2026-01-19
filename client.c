@@ -377,6 +377,11 @@ int client_main(struct client *c) {
       log_error("recv_fd failed");
       return -1;
     } else {
+      char buff[100] = {0};
+      snprintf(buff, sizeof(buff),
+               "\nattach failed: session %d not found or not detached\n",
+               detached_session_id);
+      write(STDOUT_FILENO, buff, strlen(buff));
       log_warn("attach failed: session %d not found or not detached",
                detached_session_id);
       return 0;
