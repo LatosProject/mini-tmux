@@ -336,10 +336,29 @@ int client_main(struct client *c) {
 
   extern int detached_session_id;
   extern int list_sessions;
+  extern int kill_session_id;
 
   // 列出所有 session
   if (list_sessions) {
     send_server(MSG_LIST_SESSIONS, server_fd, NULL, 0);
+    // 读取响应
+    size_t len;
+    if (read(server_fd, &len, sizeof(len)) > 0 && len > 0) {
+      char *response = malloc(len);
+      if (read(server_fd, response, len) > 0) {
+        printf("%s", response);
+      }
+      free(response);
+    }
+    close(server_fd);
+    log_close();
+    return 0;
+  }
+
+  // 杀死指定 session
+  if (kill_session_id != -1) {
+    send_server(MSG_DETACHKILL, server_fd, &kill_session_id,
+                sizeof(kill_session_id));
     // 读取响应
     size_t len;
     if (read(server_fd, &len, sizeof(len)) > 0 && len > 0) {

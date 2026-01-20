@@ -134,6 +134,42 @@ int server_receive(int fd) {
     return -1; // 关闭连接
   }
 
+  // MSG_DETACHKILL: 杀死指定 session
+  if (hdr.type == MSG_DETACHKILL) {
+    char response[256] = {0};
+    int session_id;
+    memcpy(&session_id, buf, sizeof(session_id));
+
+    struct session *target = find_session_by_id(session_id);
+    if (target && target->slave_pid > 0) {
+      log_info("killing session id=%d, pid=%d", target->id, target->slave_pid);
+      // 发送 SIGKILL 终止 shell 进程
+      kill(target->slave_pid, SIGKILL);
+      // 关闭相关 fd
+      if (target->master_fd >= 0)
+        close(target->master_fd);
+      if (target->slave_fd >= 0)
+        close(target->slave_fd);
+      if (target->client_fd >= 0)
+        close(target->client_fd);
+      // 从链表中删除
+      list_del(&target->link);
+      free(target);
+      snprintf(response, sizeof(response), "killed session %d\n", session_id);
+    } else {
+      log_warn("kill-session failed: session %d not found", session_id);
+      snprintf(response, sizeof(response), "session %d not found\n",
+               session_id);
+    }
+
+    size_t len = strlen(response) + 1;
+    write(fd, &len, sizeof(len));
+    write(fd, response, len);
+
+    free(buf);
+    return -1; // 关闭连接
+  }
+
   // 其他消息类型需要关联 session
   struct session *cur = find_session_by_client_fd(fd);
 

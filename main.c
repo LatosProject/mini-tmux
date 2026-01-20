@@ -17,6 +17,7 @@ struct client client;
 char *socket_path;
 int detached_session_id = -1;
 int list_sessions = 0;
+int kill_session_id = -1;
 
 static void print_help(const char *prog) {
   printf("mini-tmux - a minimal terminal multiplexer\n\n");
@@ -25,6 +26,7 @@ static void print_help(const char *prog) {
   printf("Options:\n");
   printf("  -l         List all sessions\n");
   printf("  -s <id>    Attach to detached session by id\n");
+  printf("  -k <id>    Kill session by id\n");
   printf("  -h         Show this help message\n\n");
   printf("Key bindings:\n");
   printf("  Ctrl+B d   Detach from current session\n\n");
@@ -32,6 +34,7 @@ static void print_help(const char *prog) {
   printf("  %s           Start a new session\n", prog);
   printf("  %s -l        List all sessions\n", prog);
   printf("  %s -s 0      Attach to session 0\n", prog);
+  printf("  %s -k 0      Kill session 0\n", prog);
 }
 
 int main(int argc, char *argv[]) {
@@ -46,6 +49,10 @@ int main(int argc, char *argv[]) {
   if (argc == 3 && (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-S") == 0)) {
     detached_session_id = strtol(argv[2], NULL, 10);
     log_info("attaching to session id=%d\n", detached_session_id);
+  }
+  if (argc == 3 && (strcmp(argv[1], "-k") == 0 || strcmp(argv[1], "-K") == 0)) {
+    kill_session_id = strtol(argv[2], NULL, 10);
+    log_info("killing session id=%d\n", kill_session_id);
   }
   uid_t uid = getuid();
 
