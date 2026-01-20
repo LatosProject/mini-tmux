@@ -166,7 +166,7 @@ void act_resize(struct client *c, client_event ev) {
 void act_child_exit(struct client *c, client_event ev) {
   c->child_exited = 1;
   char msg[100] = {0};
-  snprintf(msg, sizeof(msg), "\nChild exited with PID: %d\n", c->slave_pid);
+  snprintf(msg, sizeof(msg), "Child exited with PID: %d\n", c->slave_pid);
   write(STDOUT_FILENO, msg, strlen(msg));
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
 }
@@ -361,7 +361,7 @@ int client_main(struct client *c) {
   } else {
     // 不允许嵌套运行
     if (client_check_nested()) {
-      char buff[100] = "\nsessions should be nested with care\n";
+      char buff[100] = "sessions should be nested with care\n";
       write(STDOUT_FILENO, buff, strlen(buff));
       _exit(-1);
     }
@@ -379,7 +379,7 @@ int client_main(struct client *c) {
     } else {
       char buff[100] = {0};
       snprintf(buff, sizeof(buff),
-               "\nattach failed: session %d not found or not detached\n",
+               "attach failed: session %d not found or not detached\n",
                detached_session_id);
       write(STDOUT_FILENO, buff, strlen(buff));
       log_warn("attach failed: session %d not found or not detached",
