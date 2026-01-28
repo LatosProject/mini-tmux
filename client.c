@@ -188,11 +188,18 @@ void act_resize(struct client *c, client_event ev) {
 
   // 清屏，防止残留内容
   write(STDOUT_FILENO, "\033[2J", 4);
+
+  // 重新渲染所有 pane 和边框
+  list_for_each_entry(p, &c->pane->window->panes, link) {
+    render_pane(p);
+    if (p->link.next != &c->pane->window->panes) {
+      render_pane_borders(p);
+    }
+  }
+  render_status_bar(c);
+
   // 通知 server 新尺寸
   send_server(MSG_RESIZE, c->server_fd, &ws_pane, sizeof(ws_pane));
-  if (p->link.next != &c->pane->window->panes) {
-    render_pane_borders(p);
-  }
   return;
 }
 
