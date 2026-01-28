@@ -1,10 +1,10 @@
-#include "list.h"
 #define _XOPEN_SOURCE 700
+#include "server.h"
 #include "client.h"
+#include "list.h"
 #include "log.h"
 #include "main.h"
 #include "mini_tmux-protocol.h"
-#include "server.h"
 #include "spawn.h"
 #include "util.h"
 #include <errno.h>

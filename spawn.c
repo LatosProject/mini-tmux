@@ -28,16 +28,22 @@ pid_t spawn_child(struct session *s) {
       perror("open slave pty failed");
       _exit(1);
     }
+
+    // 配置 PTY 终端属性
+    struct termios tio;
+    tcgetattr(s->slave_fd, &tio);
+    tio.c_oflag |= OPOST | ONLCR; // 输出处理：NL -> CR+NL
+    tio.c_iflag |= ICRNL;         // 输入处理：CR -> NL
+    tcsetattr(s->slave_fd, TCSANOW, &tio);
+
     // 把 slave 设为子进程的控制终端
     ioctl(s->slave_fd, TIOCSCTTY, 0);
 
-    setenv("TERM", "screen-256color", 1);
+    setenv("TERM", "xterm-256color", 1);
 
     char buf[100];
     snprintf(buf, sizeof(buf), "%d", s->slave_pid);
-
     setenv("MINI_TMUX", buf, 1);
-    struct termios ts;
 
     tcsetpgrp(
         s->slave_fd,

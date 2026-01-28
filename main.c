@@ -21,7 +21,7 @@ int kill_session_id = -1;
 
 static void print_help(const char *prog) {
   printf("mini-tmux - a minimal terminal multiplexer\n\n");
-  printf("        Version: 0.1.0 By Latos\n\n");
+  printf("        Version: 0.2.0 By Latos\n\n");
   printf("Usage: %s [options]\n\n", prog);
   printf("Options:\n");
   printf("  -l         List all sessions\n");

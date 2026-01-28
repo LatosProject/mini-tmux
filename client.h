@@ -1,5 +1,11 @@
 // client.h
+#ifndef CLIENT_H
+#define CLIENT_H
+
+#include "input.h"
 #include "mini_tmux-protocol.h"
+#include "render.h"
+#include "window.h"
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <termios.h>
@@ -24,7 +30,7 @@ typedef enum {
 
 struct client {
   client_state state;
-  int server_fd;    // 与 server 的连接 fd
+  int server_fd; // 与 server 的连接 fd
   int master_fd;
   int slave_fd;
   pid_t slave_pid;
@@ -34,6 +40,7 @@ struct client {
   struct termios raw;
   char *slave_name;
   struct environ *environ;
+  struct window_pane *pane;
 };
 
 typedef void (*action_fn)(struct client *c, client_event ev);
@@ -53,3 +60,5 @@ void act_enable_raw_mode(struct client *C, client_event ev);
 void act_pty_read(struct client *c, client_event ev);
 void act_stdin_read(struct client *c, client_event ev);
 void act_detach(struct client *c, client_event ev);
+
+#endif /* CLIENT_H */

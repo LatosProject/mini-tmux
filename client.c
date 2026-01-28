@@ -1,4 +1,5 @@
 #include "mini_tmux-protocol.h"
+#include "window.h"
 #define _GNU_SOURCE
 #include "client.h"
 #include "log.h"
@@ -159,7 +160,14 @@ void act_resize(struct client *c, client_event ev) {
   if (ioctl(STDIN_FILENO, TIOCGWINSZ, &(c->ws)) == -1) {
     return;
   }
-  ioctl(c->master_fd, TIOCSWINSZ, &(c->ws));
+  struct winsize ws_pane = c->ws;
+  ws_pane.ws_row -= 1;
+  ioctl(c->master_fd, TIOCSWINSZ, &ws_pane);
+  pane_resize(c->pane, ws_pane.ws_col, ws_pane.ws_row);
+  // 清屏，防止残留内容
+  write(STDOUT_FILENO, "\033[2J", 4);
+  // 通知 server 新尺寸
+  send_server(MSG_RESIZE, c->server_fd, &ws_pane, sizeof(ws_pane));
   return;
 }
 
@@ -175,6 +183,7 @@ void act_enable_raw_mode(struct client *c, client_event ev) {
   // 原始终端切换至 raw 模式
   tcgetattr(STDIN_FILENO, &(c->raw));
   c->raw.c_lflag &= ~(ECHO | ICANON | ISIG); // 关掉回显/ 立即读取 / 禁用SIGINT
+  c->raw.c_iflag &= ~ICRNL;  // 禁用 CR->NL 转换，否则 Enter(\r) 会变成 \n (Ctrl+J)
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->raw));
 }
 
@@ -185,7 +194,10 @@ void act_pty_read(struct client *c, client_event ev) {
     dispatch_event(c, EV_EOF_PTY);
     return;
   }
-  write(STDOUT_FILENO, buff, n);
+  // write(STDOUT_FILENO, buff, n);
+  pane_input(c->pane, buff, n);
+  render_status_bar(c);
+  render_pane(c->pane);
 }
 
 void act_stdin_read(struct client *c, client_event ev) {
@@ -253,8 +265,8 @@ void signal_handler(int sig) {
 void client_init(struct client *c) {
   c->state = ST_BOOT;
   c->server_fd = -1;
-  c->master_fd = -1;
-  c->slave_fd = -1;
+  c->master_fd = -1; // 子进程的父级
+  c->slave_fd = -1;  // 子进程
   c->slave_pid = -1;
   c->child_exited = 0;
 
@@ -386,7 +398,9 @@ int client_main(struct client *c) {
     }
     // 创建新session
     char buf[100] = "new-session";
-    send_server(MSG_RESIZE, server_fd, &c->ws, sizeof(c->ws));
+    struct winsize ws_pty = c->ws;
+    ws_pty.ws_row -= 1;
+    send_server(MSG_RESIZE, server_fd, &ws_pty, sizeof(ws_pty));
     send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
   }
   // 获取 server 主进程fd
@@ -406,7 +420,10 @@ int client_main(struct client *c) {
       return 0;
     }
   }
-
+  struct window *w = window_create("New");
+  c->ws.ws_row -= 1;
+  c->pane = pane_create(w, c->ws.ws_col, c->ws.ws_row, 0, 0);
+  pane_set_master_fd(c->pane, c->master_fd);
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;

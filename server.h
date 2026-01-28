@@ -9,14 +9,13 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#define MAX_CLIENTS 64  // 最大客户端连接数
+#define MAX_CLIENTS 64 // 最大客户端连接数
 
+#include "list.h"
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <termios.h>
-#include "list.h"
-
 /**
  * 启动 mini-tmux 服务端
  *
@@ -37,20 +36,21 @@ int server_start(void);
  * - 会话的分离/附加状态
  */
 struct session {
-  int id;                       // 会话唯一标识符
-  int client_fd;                // 关联的客户端连接 fd（-1 表示无客户端）
-  int master_fd;                // PTY 主设备 fd（用于与 shell 通信）
-  int slave_fd;                 // PTY 从设备 fd（shell 的控制终端）
-  int detached;                 // 分离标志：1=已分离，0=已附加
-  pid_t slave_pid;              // shell 子进程 PID
-  struct winsize ws;            // 终端窗口大小（行数、列数）
-  struct termios orig_termios;  // 原始终端属性（用于恢复）
-  int child_exited;             // 子进程退出标志
-  struct termios raw;           // raw 模式终端属性
-  char *slave_name;             // PTY 从设备路径（如 /dev/pts/X）
-  struct environ *environ;      // 环境变量（未使用）
+  int id;                      // 会话唯一标识符
+  int client_fd;               // 关联的客户端连接 fd（-1 表示无客户端）
+  int master_fd;               // PTY 主设备 fd（用于与 shell 通信）
+  int slave_fd;                // PTY 从设备 fd（shell 的控制终端）
+  int detached;                // 分离标志：1=已分离，0=已附加
+  pid_t slave_pid;             // shell 子进程 PID
+  struct winsize ws;           // 终端窗口大小（行数、列数）
+  struct termios orig_termios; // 原始终端属性（用于恢复）
+  int child_exited;            // 子进程退出标志
+  struct termios raw;          // raw 模式终端属性
+  char *slave_name;            // PTY 从设备路径（如 /dev/pts/X）
+  struct environ *environ;     // 环境变量（未使用）
 
-  struct list_head link;        // 链表节点，用于连接到全局会话列表
+  struct list_head link; // 链表节点，用于连接到全局会话列表
+  struct window *active_window;
 };
 
 #endif /* SERVER_H */

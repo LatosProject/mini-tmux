@@ -1,5 +1,4 @@
 #include "util.h"
-#include "client.h"
 #include "main.h"
 #include <fcntl.h>
 #include <paths.h>

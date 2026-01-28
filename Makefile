@@ -57,10 +57,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/latos/mini-tmux
+CMAKE_SOURCE_DIR = /Users/latos/Desktop/Code/mini-tmux
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/latos/mini-tmux
+CMAKE_BINARY_DIR = /Users/latos/Desktop/Code/mini-tmux
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/latos/mini-tmux/CMakeFiles /Users/latos/mini-tmux//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/latos/Desktop/Code/mini-tmux/CMakeFiles /Users/latos/Desktop/Code/mini-tmux//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/latos/mini-tmux/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/latos/Desktop/Code/mini-tmux/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -153,6 +153,30 @@ client.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/client.c.s
 .PHONY : client.c.s
 
+input.o: input.c.o
+.PHONY : input.o
+
+# target to build an object file
+input.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/input.c.o
+.PHONY : input.c.o
+
+input.i: input.c.i
+.PHONY : input.i
+
+# target to preprocess a source file
+input.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/input.c.i
+.PHONY : input.c.i
+
+input.s: input.c.s
+.PHONY : input.s
+
+# target to generate assembly for a file
+input.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/input.c.s
+.PHONY : input.c.s
+
 log.o: log.c.o
 .PHONY : log.o
 
@@ -200,6 +224,30 @@ main.s: main.c.s
 main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/main.c.s
 .PHONY : main.c.s
+
+render.o: render.c.o
+.PHONY : render.o
+
+# target to build an object file
+render.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/render.c.o
+.PHONY : render.c.o
+
+render.i: render.c.i
+.PHONY : render.i
+
+# target to preprocess a source file
+render.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/render.c.i
+.PHONY : render.c.i
+
+render.s: render.c.s
+.PHONY : render.s
+
+# target to generate assembly for a file
+render.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/render.c.s
+.PHONY : render.c.s
 
 server.o: server.c.o
 .PHONY : server.o
@@ -273,6 +321,30 @@ util.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.s
 .PHONY : util.c.s
 
+window.o: window.c.o
+.PHONY : window.o
+
+# target to build an object file
+window.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/window.c.o
+.PHONY : window.c.o
+
+window.i: window.c.i
+.PHONY : window.i
+
+# target to preprocess a source file
+window.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/window.c.i
+.PHONY : window.c.i
+
+window.s: window.c.s
+.PHONY : window.s
+
+# target to generate assembly for a file
+window.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/window.c.s
+.PHONY : window.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -285,12 +357,18 @@ help:
 	@echo "... client.o"
 	@echo "... client.i"
 	@echo "... client.s"
+	@echo "... input.o"
+	@echo "... input.i"
+	@echo "... input.s"
 	@echo "... log.o"
 	@echo "... log.i"
 	@echo "... log.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... render.o"
+	@echo "... render.i"
+	@echo "... render.s"
 	@echo "... server.o"
 	@echo "... server.i"
 	@echo "... server.s"
@@ -300,6 +378,9 @@ help:
 	@echo "... util.o"
 	@echo "... util.i"
 	@echo "... util.s"
+	@echo "... window.o"
+	@echo "... window.i"
+	@echo "... window.s"
 .PHONY : help
 
 
