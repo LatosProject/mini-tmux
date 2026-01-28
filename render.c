@@ -1,6 +1,7 @@
 #include "render.h"
 #include "client.h"
 #include "list.h"
+#include "window.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,6 @@ void render_screen(struct session *s) {
 void render_pane(struct window_pane *p) {
   if (!p || !p->grid)
     return;
-
   // 隐藏光标
   write(STDOUT_FILENO, CURSOR_HIDE, 6);
 
@@ -61,7 +61,6 @@ void render_pane(struct window_pane *p) {
       if (need_update) {
         // 先重置
         write(STDOUT_FILENO, "\033[0m", 4);
-
         // 设置属性
         if (c->attr & 0x01)
           write(STDOUT_FILENO, "\033[1m", 4); // bold
@@ -100,7 +99,6 @@ void render_pane(struct window_pane *p) {
       }
     }
   }
-
   // 重置颜色
   write(STDOUT_FILENO, "\033[0m", 4);
 
@@ -122,11 +120,12 @@ void render_status_bar(struct client *c) {
   write(STDOUT_FILENO, buf, len);
 
   // 写状态内容
-  const char *text = " mini-tmux v0.2.0";
-  write(STDOUT_FILENO, text, strlen(text));
+  const char *wname = c->pane->window->name ? c->pane->window->name : "unnamed";
+  len = snprintf(buf, sizeof(buf), " %s ", wname);
+  write(STDOUT_FILENO, buf, len);
 
   // 用空格填满整行
-  for (unsigned int i = strlen(text); i < cols; i++) {
+  for (unsigned int i = strlen(buf); i < cols; i++) {
     write(STDOUT_FILENO, " ", 1);
   }
 

@@ -174,8 +174,8 @@ void act_resize(struct client *c, client_event ev) {
 void act_child_exit(struct client *c, client_event ev) {
   c->child_exited = 1;
   char msg[100] = {0};
-  snprintf(msg, sizeof(msg), "Child exited with PID: %d\n", c->slave_pid);
-  write(STDOUT_FILENO, msg, strlen(msg));
+  // snprintf(msg, sizeof(msg), "Child exited with PID: %d\n", c->slave_pid);
+  // write(STDOUT_FILENO, msg, strlen(msg));
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
 }
 
@@ -183,7 +183,8 @@ void act_enable_raw_mode(struct client *c, client_event ev) {
   // 原始终端切换至 raw 模式
   tcgetattr(STDIN_FILENO, &(c->raw));
   c->raw.c_lflag &= ~(ECHO | ICANON | ISIG); // 关掉回显/ 立即读取 / 禁用SIGINT
-  c->raw.c_iflag &= ~ICRNL;  // 禁用 CR->NL 转换，否则 Enter(\r) 会变成 \n (Ctrl+J)
+  c->raw.c_iflag &=
+      ~ICRNL; // 禁用 CR->NL 转换，否则 Enter(\r) 会变成 \n (Ctrl+J)
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->raw));
 }
 
@@ -420,7 +421,7 @@ int client_main(struct client *c) {
       return 0;
     }
   }
-  struct window *w = window_create("New");
+  struct window *w = window_create("New Window");
   c->ws.ws_row -= 1;
   c->pane = pane_create(w, c->ws.ws_col, c->ws.ws_row, 0, 0);
   pane_set_master_fd(c->pane, c->master_fd);
@@ -433,6 +434,8 @@ int client_main(struct client *c) {
   sigaction(SIGCHLD, &sa, NULL);
 
   dispatch_event(c, EV_ENABLE_RAW_MODE);
+  // 清屏，防止残留内容
+  write(STDOUT_FILENO, "\033[2J\033[H", 7);
   log_info("entering client loop");
   client_loop(c);
 
