@@ -1,9 +1,6 @@
 // client.h
 #ifndef CLIENT_H
 #define CLIENT_H
-
-#include "input.h"
-#include "mini_tmux-protocol.h"
 #include "render.h"
 #include "window.h"
 #include <sys/ioctl.h>
@@ -25,7 +22,9 @@ typedef enum {
   EV_EOF_STDIN,
   EV_EOF_PTY,
   EV_ENABLE_RAW_MODE,
-  EV_DETACHED
+  EV_DETACHED,
+  EV_PANE_SPLIT,
+  
 } client_event;
 
 struct client {
@@ -60,5 +59,6 @@ void act_enable_raw_mode(struct client *C, client_event ev);
 void act_pty_read(struct client *c, client_event ev);
 void act_stdin_read(struct client *c, client_event ev);
 void act_detach(struct client *c, client_event ev);
+void act_pane_split(struct client *c, client_event ev);
 
 #endif /* CLIENT_H */

@@ -51,10 +51,15 @@ void server_signal_handler(int sig) {
 void session_init(struct session *s) {
   s->id = -1;
   s->client_fd = -1;
-  s->master_fd = -1;
+  s->pane_count = 0;
+  for (int i = 0; i < MAX_PANES; i++) {
+    s->master_fds[i] = -1;
+    s->pane_pids[i] = -1;
+  }
   s->slave_fd = -1;
   s->slave_pid = -1;
   s->child_exited = 0;
+  s->detached = 0;
   list_init(&s->link);
   tcgetattr(STDIN_FILENO, &(s->orig_termios));
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
@@ -141,13 +146,17 @@ int server_receive(int fd) {
     memcpy(&session_id, buf, sizeof(session_id));
 
     struct session *target = find_session_by_id(session_id);
-    if (target && target->slave_pid > 0) {
-      log_info("killing session id=%d, pid=%d", target->id, target->slave_pid);
-      // 发送 SIGKILL 终止 shell 进程
-      kill(target->slave_pid, SIGKILL);
-      // 关闭相关 fd
-      if (target->master_fd >= 0)
-        close(target->master_fd);
+    if (target && target->pane_count > 0) {
+      log_info("killing session id=%d", target->id);
+      // 杀死所有 pane 的 shell 进程
+      for (int i = 0; i < target->pane_count; i++) {
+        if (target->pane_pids[i] > 0) {
+          kill(target->pane_pids[i], SIGKILL);
+        }
+        if (target->master_fds[i] >= 0) {
+          close(target->master_fds[i]);
+        }
+      }
       if (target->slave_fd >= 0)
         close(target->slave_fd);
       if (target->client_fd >= 0)
@@ -193,35 +202,53 @@ int server_receive(int fd) {
 
   // 判断消息类型
   switch (hdr.type) {
-    // 处理命令
+  // 处理命令
   case MSG_COMMAND:
-    if (strcmp(buf, "new-session") == 0) {
+    if (strcmp(buf, "new-session") == 0 || strcmp(buf, "pane-split") == 0) {
+      // 检查 pane 数量限制
+      if (cur->pane_count >= MAX_PANES) {
+        log_error("max panes reached");
+        free(buf);
+        return 1;
+      }
+
       // 创建伪终端
-      cur->master_fd = posix_openpt(O_RDWR);
-      if (cur->master_fd == -1) {
+      int new_master_fd = posix_openpt(O_RDWR);
+      if (new_master_fd == -1) {
         log_error("posix_openpt failed: %s", strerror(errno));
         _exit(-1);
       }
-      // 传回client
       // 解锁 slave 设备
-      grantpt(cur->master_fd);
-      unlockpt(cur->master_fd);
+      grantpt(new_master_fd);
+      unlockpt(new_master_fd);
 
-      send_fd(fd, cur->master_fd);
-      cur->slave_name = ptsname(cur->master_fd);
+      // 传回 client
+      send_fd(fd, new_master_fd);
+      cur->slave_name = ptsname(new_master_fd);
       cur->slave_fd = open(cur->slave_name, O_RDWR);
       ioctl(cur->slave_fd, TIOCSWINSZ, &cur->ws);
 
-      log_info("create a new session, id:%d", cur->id);
+      log_info("create pane %d for session id:%d", cur->pane_count, cur->id);
 
       cur->slave_pid = spawn_child(cur);
 
+      /* 父进程关闭 slave_fd，否则 shell 退出后 master 不会收到 EOF */
+      close(cur->slave_fd);
+      cur->slave_fd = -1;
+
       if (cur->slave_pid < 0) {
         log_error("spawn_child failed");
+        close(new_master_fd);
         _exit(-1);
       }
 
-      log_info("spawned child process with pid %d", cur->slave_pid);
+      // 保存到数组
+      cur->master_fds[cur->pane_count] = new_master_fd;
+      cur->pane_pids[cur->pane_count] = cur->slave_pid;
+      cur->pane_count++;
+
+      log_info("spawned child process with pid %d, total panes: %d",
+               cur->slave_pid, cur->pane_count);
     }
     free(buf);
     return 1;
@@ -233,8 +260,11 @@ int server_receive(int fd) {
       return 1;
     }
     memcpy(&cur->ws, buf, sizeof(cur->ws)); // 保存尺寸
-    if (cur->slave_fd >= 0) {
-      ioctl(cur->slave_fd, TIOCSWINSZ, &cur->ws);
+    // 通知所有 pane 的 PTY 新尺寸
+    for (int i = 0; i < cur->pane_count; i++) {
+      if (cur->master_fds[i] >= 0) {
+        ioctl(cur->master_fds[i], TIOCSWINSZ, &cur->ws);
+      }
     }
     free(buf);
     return 1;
@@ -261,16 +291,22 @@ int server_receive(int fd) {
       memcpy(&session_id, buf, sizeof(session_id));
       struct session *target = find_session_by_id(session_id);
       if (target && target->detached) {
-        log_debug("attaching to detached session id=%d", target->id);
-        send_fd(fd, target->master_fd);
+        log_debug("attaching to detached session id=%d, pane_count=%d",
+                  target->id, target->pane_count);
+        // 先发送 pane 数量
+        write(fd, &target->pane_count, sizeof(int));
+        // 再发送所有 pane 的 fd
+        for (int i = 0; i < target->pane_count; i++) {
+          send_fd(fd, target->master_fds[i]);
+        }
         target->client_fd = fd;
         target->detached = 0;
       } else {
         log_warn("attach failed: session %d not found or not detached",
                  session_id);
-        // 发送失败标记：写入一个字节表示失败，不传递 fd
-        char fail = 0;
-        write(fd, &fail, 1);
+        // 发送失败标记：pane_count = 0
+        int zero = 0;
+        write(fd, &zero, sizeof(int));
       }
     }
     free(buf);
@@ -388,23 +424,43 @@ void server_loop(int listen_fd) {
       while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         struct session *sess;
         list_for_each_entry(sess, &session_list, link) {
-          if (sess->slave_pid == pid) {
-            sess->child_exited = 1;
-            close(sess->master_fd);
-            close(sess->slave_fd);
-            // 关闭 client 连接，通知 client 退出
-            if (sess->client_fd >= 0) {
-              // 同步清理 client_fds 数组
-              for (int i = 0; i < MAX_CLIENTS; i++) {
-                if (client_fds[i] == sess->client_fd) {
-                  client_fds[i] = -1;
+          // 检查是否是这个 session 的某个 pane
+          for (int i = 0; i < sess->pane_count; i++) {
+            if (sess->pane_pids[i] == pid) {
+              log_info("pane %d (pid %d) exited in session %d", i, pid,
+                       sess->id);
+              // 关闭这个 pane 的 master_fd
+              if (sess->master_fds[i] >= 0) {
+                close(sess->master_fds[i]);
+                sess->master_fds[i] = -1;
+              }
+              sess->pane_pids[i] = -1;
+
+              // 检查是否所有 pane 都退出了
+              int all_exited = 1;
+              for (int j = 0; j < sess->pane_count; j++) {
+                if (sess->pane_pids[j] > 0) {
+                  all_exited = 0;
                   break;
                 }
               }
-              close(sess->client_fd);
-              sess->client_fd = -1;
+              if (all_exited) {
+                sess->child_exited = 1;
+                // 关闭 client 连接，通知 client 退出
+                if (sess->client_fd >= 0) {
+                  // 同步清理 client_fds 数组
+                  for (int k = 0; k < MAX_CLIENTS; k++) {
+                    if (client_fds[k] == sess->client_fd) {
+                      client_fds[k] = -1;
+                      break;
+                    }
+                  }
+                  close(sess->client_fd);
+                  sess->client_fd = -1;
+                }
+              }
+              break;
             }
-            break;
           }
         }
       }

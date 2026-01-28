@@ -39,11 +39,13 @@ static void sync_grid_from_vterm(struct window_pane *p) {
 
   for (unsigned int y = 0; y < p->sy; y++) {
     for (unsigned int x = 0; x < p->sx; x++) {
+      // 终端解析完成的数据
       VTermPos pos = {.row = y, .col = x};
       VTermScreenCell cell;
       memset(&cell, 0, sizeof(cell));
       vterm_screen_get_cell(p->vts, pos, &cell);
 
+      // grid 中的单元格
       struct cell *c = &p->grid->cells[y * p->grid->width + x];
       memset(c, 0, sizeof(*c));
 
@@ -62,7 +64,8 @@ static void sync_grid_from_vterm(struct window_pane *p) {
         c->fg = cell.fg.indexed.idx;
       } else if (VTERM_COLOR_IS_RGB(&cell.fg)) {
         // RGB 转 216 色立方体 + 灰度
-        uint8_t r = cell.fg.rgb.red, g = cell.fg.rgb.green, b = cell.fg.rgb.blue;
+        uint8_t r = cell.fg.rgb.red, g = cell.fg.rgb.green,
+                b = cell.fg.rgb.blue;
         c->fg = 16 + (r / 51) * 36 + (g / 51) * 6 + (b / 51);
       }
 
@@ -71,23 +74,28 @@ static void sync_grid_from_vterm(struct window_pane *p) {
       } else if (VTERM_COLOR_IS_INDEXED(&cell.bg)) {
         c->bg = cell.bg.indexed.idx;
       } else if (VTERM_COLOR_IS_RGB(&cell.bg)) {
-        uint8_t r = cell.bg.rgb.red, g = cell.bg.rgb.green, b = cell.bg.rgb.blue;
+        uint8_t r = cell.bg.rgb.red, g = cell.bg.rgb.green,
+                b = cell.bg.rgb.blue;
         c->bg = 16 + (r / 51) * 36 + (g / 51) * 6 + (b / 51);
       }
 
       // 提取属性
       c->attr = 0;
-      if (cell.attrs.bold) c->attr |= 0x01;
-      if (cell.attrs.underline) c->attr |= 0x02;
-      if (cell.attrs.italic) c->attr |= 0x04;
-      if (cell.attrs.reverse) c->attr |= 0x08;
+      if (cell.attrs.bold)
+        c->attr |= 0x01;
+      if (cell.attrs.underline)
+        c->attr |= 0x02;
+      if (cell.attrs.italic)
+        c->attr |= 0x04;
+      if (cell.attrs.reverse)
+        c->attr |= 0x08;
     }
   }
 
   // 同步光标位置
   VTermPos cursor;
-  VTermState *state = vterm_obtain_state(p->vt);
-  vterm_state_get_cursorpos(state, &cursor);
+  VTermState *state = vterm_obtain_state(p->vt); // state 状态机跟踪光标位置
+  vterm_state_get_cursorpos(state, &cursor);     // 查询光标
   p->cx = (unsigned int)cursor.col;
   p->cy = (unsigned int)cursor.row;
 }

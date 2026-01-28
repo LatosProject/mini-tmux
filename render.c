@@ -4,7 +4,6 @@
 #include "window.h"
 #include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #define CURSOR_HIDE "\033[?25l"
@@ -102,7 +101,7 @@ void render_pane(struct window_pane *p) {
   // 重置颜色
   write(STDOUT_FILENO, "\033[0m", 4);
 
-  // 光标移动到 pane 内的正确位置
+  // 光标移动到 pane 内的正确位置 （vt解析）
   int clen = snprintf(buf, sizeof(buf), "\033[%u;%uH", p->yoff + p->cy + 1,
                       p->xoff + p->cx + 1);
   write(STDOUT_FILENO, buf, clen);
@@ -126,10 +125,29 @@ void render_status_bar(struct client *c) {
 
   // 用空格填满整行
   for (unsigned int i = strlen(buf); i < cols; i++) {
+    if (i >= cols - 17) {
+      int len = snprintf(buf, sizeof(buf), "mini-tmux v0.3.0");
+      write(STDOUT_FILENO, buf, len);
+      write(STDOUT_FILENO, " ", 1);
+      break;
+    }
     write(STDOUT_FILENO, " ", 1);
   }
 
   // 重置属性
   write(STDOUT_FILENO, "\033[0m", 4);
 }
-void render_pane_borders(struct window_pane *p) {}
+void render_pane_borders(struct window_pane *p) {
+  write(STDOUT_FILENO, CURSOR_HIDE, 6);
+  char buf[256];
+  for (unsigned int y = 0; y < p->sy; y++) {
+    int len = snprintf(buf, sizeof(buf), "\033[%u;%uH\033[34m│\033[0m",
+                       p->yoff + y + 1, p->xoff + p->sx + 1);
+    write(STDOUT_FILENO, buf, len);
+  }
+  // 光标移动到 pane 内的正确位置 （vt解析）
+  int clen = snprintf(buf, sizeof(buf), "\033[%u;%uH", p->yoff + p->cy + 1,
+                      p->xoff + p->cx + 1);
+  write(STDOUT_FILENO, buf, clen);
+  write(STDOUT_FILENO, CURSOR_SHOW, 6);
+}

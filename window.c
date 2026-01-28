@@ -14,9 +14,12 @@ static void vterm_output_callback(const char *s, size_t len, void *user) {
 }
 
 void pane_set_master_fd(struct window_pane *p, int fd) {
-  if (!p) return;
+  if (!p)
+    return;
   p->master_fd = fd;
   if (p->vt) {
+    /* 通过 vterm_input_write() 喂给 vterm 的数据会经过 vterm_output_callback
+       发送到 master_fd */
     vterm_output_set_callback(p->vt, vterm_output_callback, p);
   }
 }
@@ -84,10 +87,12 @@ struct window_pane *pane_create(struct window *w, unsigned int sx,
   // 初始化 libvterm
   p->vt = vterm_new(sy, sx);
   if (p->vt) {
-    vterm_set_utf8(p->vt, 1);
-    p->vts = vterm_obtain_screen(p->vt);
-    vterm_screen_enable_altscreen(p->vts, 1);  // 启用备用屏幕
-    vterm_screen_reset(p->vts, 1);
+    vterm_set_utf8(p->vt, 1); // 设置输入为 UTF-8 编码
+    p->vts = vterm_obtain_screen(
+        p->vt); // 初始化screen 屏幕单元格内容（字符+颜色+属性）
+    vterm_screen_enable_altscreen(p->vts,
+                                  1); // 启用备用屏幕（维护两个屏幕缓冲区）
+    vterm_screen_reset(p->vts, 1);    // 初始化内存
   }
 
   list_add_tail(&p->link, &w->panes);

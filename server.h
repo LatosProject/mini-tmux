@@ -10,7 +10,7 @@
 #define SERVER_H
 
 #define MAX_CLIENTS 64 // 最大客户端连接数
-
+#define MAX_PANES 64
 #include "list.h"
 #include <stdint.h>
 #include <sys/ioctl.h>
@@ -38,8 +38,10 @@ int server_start(void);
 struct session {
   int id;                      // 会话唯一标识符
   int client_fd;               // 关联的客户端连接 fd（-1 表示无客户端）
-  int master_fd;               // PTY 主设备 fd（用于与 shell 通信）
-  int slave_fd;                // PTY 从设备 fd（shell 的控制终端）
+  int master_fds[MAX_PANES];   // PTY 主设备 fd 数组（每个 pane 一个）
+  int pane_count;              // 当前 pane 数量
+  pid_t pane_pids[MAX_PANES];  // 每个 pane 的 shell 进程 PID
+  int slave_fd;                // PTY 从设备 fd（临时使用）
   int detached;                // 分离标志：1=已分离，0=已附加
   pid_t slave_pid;             // shell 子进程 PID
   struct winsize ws;           // 终端窗口大小（行数、列数）

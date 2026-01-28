@@ -5,7 +5,6 @@
 #include "window.h"
 #include <stdint.h>
 #include <sys/types.h>
-// 前向声明（避免循环依赖）
 struct session;
 struct window_pane;
 struct client;
@@ -36,12 +35,12 @@ struct screen {
 };
 
 // 函数声明
-void render_init(struct screen *s); // 缺少这个声明
+void render_init(struct screen *s);
 void screen_reinit(struct screen *s);
 void render_cleanup(struct screen *s);
 void render_screen(struct session *s);
 void render_pane(struct window_pane *p);
 void render_status_bar(struct client *c);
-void render_pane_borders(struct window_pane *w); // 参数类型应该是 window
+void render_pane_borders(struct window_pane *w);
 
 #endif /* RENDER_H */

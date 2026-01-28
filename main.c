@@ -21,7 +21,7 @@ int kill_session_id = -1;
 
 static void print_help(const char *prog) {
   printf("mini-tmux - a minimal terminal multiplexer\n\n");
-  printf("        Version: 0.2.0 By Latos\n\n");
+  printf("        Version: 0.3.0 By Latos\n\n");
   printf("Usage: %s [options]\n\n", prog);
   printf("Options:\n");
   printf("  -l         List all sessions\n");
@@ -29,7 +29,9 @@ static void print_help(const char *prog) {
   printf("  -k <id>    Kill session by id\n");
   printf("  -h         Show this help message\n\n");
   printf("Key bindings:\n");
-  printf("  Ctrl+B d   Detach from current session\n\n");
+  printf("  Ctrl+B d   Detach from current session\n");
+  printf("  Ctrl+B %%   Split pane vertically\n");
+  printf("  Ctrl+B o   Switch to next pane\n\n");
   printf("Examples:\n");
   printf("  %s           Start a new session\n", prog);
   printf("  %s -l        List all sessions\n", prog);

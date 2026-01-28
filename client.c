@@ -1,7 +1,9 @@
+#include "list.h"
 #include "mini_tmux-protocol.h"
 #include "window.h"
 #define _GNU_SOURCE
 #include "client.h"
+#include "input.h"
 #include "log.h"
 #include "main.h"
 #include "server.h"
@@ -23,7 +25,6 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-
 int server_fd;
 extern char *socket_path;
 volatile sig_atomic_t sigwinch_pending,
@@ -39,7 +40,8 @@ static const state_transition table[] = {
     {ST_RUNNING, EV_EOF_PTY, ST_EXITING, act_child_exit},
     {ST_RUNNING, EV_EOF_STDIN, ST_EXITING, NULL},
     {ST_RUNNING, EV_INTERRUPT, ST_EXITING, NULL},
-    {ST_RUNNING, EV_DETACHED, ST_EXITING, act_detach}};
+    {ST_RUNNING, EV_DETACHED, ST_EXITING, act_detach},
+    {ST_RUNNING, EV_PANE_SPLIT, ST_RUNNING, act_pane_split}};
 
 #define NTRANS (sizeof(table) / sizeof(table[0]))
 
@@ -163,11 +165,34 @@ void act_resize(struct client *c, client_event ev) {
   struct winsize ws_pane = c->ws;
   ws_pane.ws_row -= 1;
   ioctl(c->master_fd, TIOCSWINSZ, &ws_pane);
-  pane_resize(c->pane, ws_pane.ws_col, ws_pane.ws_row);
+
+  unsigned int new_height = c->ws.ws_row - 1; // 留一行给状态栏
+  unsigned int new_width = c->ws.ws_col;
+
+  // 遍历所有 pane，按比例调整
+  struct window_pane *p;
+  int pane_count = 0;
+  list_for_each_entry(p, &c->pane->window->panes, link) { pane_count++; }
+  unsigned int pane_width = (new_width - pane_count + 1) / pane_count;
+  unsigned int x_offset = 0;
+
+  list_for_each_entry(p, &c->pane->window->panes, link) {
+    pane_resize(p, pane_width, new_height);
+    p->xoff = x_offset;
+    x_offset += pane_width + 1;
+
+    // 通知 PTY 新尺寸
+    struct winsize ws = {.ws_row = new_height, .ws_col = pane_width};
+    ioctl(p->master_fd, TIOCSWINSZ, &ws);
+  }
+
   // 清屏，防止残留内容
   write(STDOUT_FILENO, "\033[2J", 4);
   // 通知 server 新尺寸
   send_server(MSG_RESIZE, c->server_fd, &ws_pane, sizeof(ws_pane));
+  if (p->link.next != &c->pane->window->panes) {
+    render_pane_borders(p);
+  }
   return;
 }
 
@@ -224,14 +249,29 @@ void act_stdin_read(struct client *c, client_event ev) {
         ctrl_b_pressed = 0;
         dispatch_event(c, EV_DETACHED);
         return;
+      } else if (buff[i] == '%') {
+        // 处理 Ctrl+B %
+        dispatch_event(c, EV_PANE_SPLIT);
+        ctrl_b_pressed = 0;
+      } else if (buff[i] == 'o' || buff[i] == 'O') {
+        // Ctrl+B o: 切换到下一个 pane
+        ctrl_b_pressed = 0;
+        struct window_pane *next =
+            list_entry(c->pane->link.next, struct window_pane, link);
+        if (&next->link == &c->pane->window->panes) {
+          // 到达链表头，回到第一个 pane
+          next =
+              list_entry(c->pane->window->panes.next, struct window_pane, link);
+        }
+        c->pane = next;
       } else {
         char cb = 0x02;
-        write(c->master_fd, &cb, 1);
-        write(c->master_fd, &buff[i], 1);
+        write(c->pane->master_fd, &cb, 1);
+        write(c->pane->master_fd, &buff[i], 1);
         ctrl_b_pressed = 0;
       }
     } else {
-      write(c->master_fd, &buff[i], 1);
+      write(c->pane->master_fd, &buff[i], 1);
     }
   }
 }
@@ -263,6 +303,64 @@ void signal_handler(int sig) {
   }
 }
 
+void act_pane_split(struct client *c, client_event ev) {
+  struct window_pane *p;
+
+  // 统计现有 pane 数量
+  int pane_count = 0;
+  list_for_each_entry(p, &c->pane->window->panes, link) { pane_count++; }
+
+  // 计算分割后每个 pane 的宽度
+  unsigned int total_width = c->ws.ws_col;
+  unsigned int total_height = c->pane->sy;
+  int new_pane_count = pane_count + 1;
+  // 总宽度减去边框数量(new_pane_count - 1)，再平分
+  unsigned int pane_width =
+      (total_width - (new_pane_count - 1)) / new_pane_count;
+
+  // 先发送新 pane 的尺寸给 server
+  struct winsize new_ws = {.ws_row = total_height, .ws_col = pane_width};
+  send_server(MSG_RESIZE, server_fd, &new_ws, sizeof(new_ws));
+
+  char buf[100] = "pane-split";
+  send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
+  int new_fd = recv_fd(server_fd);
+  if (new_fd == -1) {
+    log_error("recv_fd failed");
+    return;
+  }
+
+  // 调整所有现有 pane 的尺寸和位置
+  unsigned int x_offset = 0;
+  list_for_each_entry(p, &c->pane->window->panes, link) {
+    pane_resize(p, pane_width, total_height);
+    p->xoff = x_offset;
+    x_offset += pane_width + 1; // +1 是边框
+
+    // 通知 PTY 新尺寸
+    struct winsize ws = {.ws_row = total_height, .ws_col = pane_width};
+    ioctl(p->master_fd, TIOCSWINSZ, &ws);
+  }
+
+  // 创建新 pane
+  struct window_pane *new_pane = pane_create(
+      c->pane->window, pane_width, total_height, x_offset, c->pane->yoff);
+  pane_set_master_fd(new_pane, new_fd);
+
+  struct winsize ws = {.ws_row = new_pane->sy, .ws_col = new_pane->sx};
+  ioctl(new_fd, TIOCSWINSZ, &ws);
+
+  // 清屏并渲染所有 pane
+  write(STDOUT_FILENO, "\033[2J", 4);
+  render_status_bar(c);
+  list_for_each_entry(p, &c->pane->window->panes, link) {
+    render_pane(p);
+    if (p->link.next != &c->pane->window->panes) {
+      render_pane_borders(p);
+    }
+  }
+}
+
 void client_init(struct client *c) {
   c->state = ST_BOOT;
   c->server_fd = -1;
@@ -283,11 +381,21 @@ void client_loop(struct client *c) {
     // 输入和输出
     int maxfd;
     FD_ZERO(&rfds);
-    FD_SET(c->master_fd, &rfds);
+
+    // FD_SET(c->master_fd, &rfds);
     FD_SET(STDIN_FILENO, &rfds);
     FD_SET(c->server_fd, &rfds); // 监听 server 连接
 
     maxfd = c->master_fd > STDIN_FILENO ? c->master_fd : STDIN_FILENO;
+    struct window_pane *p;
+    list_for_each_entry(p, &c->pane->window->panes, link) {
+      if (p->master_fd > 0) {
+        FD_SET(p->master_fd, &rfds);
+        if (p->master_fd > maxfd) {
+          maxfd = p->master_fd;
+        }
+      }
+    }
     if (c->server_fd > maxfd)
       maxfd = c->server_fd;
 
@@ -323,9 +431,87 @@ void client_loop(struct client *c) {
         }
       }
 
-      if (FD_ISSET(c->master_fd, &rfds)) {
-        dispatch_event(c, EV_PTY_READ);
+      // 使用 safe 版本，因为可能在循环中删除 pane
+      struct window_pane *tmp;
+      int pane_removed = 0;
+      list_for_each_entry_safe(p, tmp, &c->pane->window->panes, link) {
+        if (p->master_fd >= 0 && FD_ISSET(p->master_fd, &rfds)) {
+          char buff[4096];
+          ssize_t n = read(p->master_fd, buff, sizeof(buff));
+          if (n > 0) {
+            pane_input(p, buff, n);
+            render_pane(p);
+            if (p->link.next != &c->pane->window->panes) {
+              render_pane_borders(p);
+            }
+          } else if (n == 0 || (n < 0 && errno != EAGAIN && errno != EINTR)) {
+            // pane 的 shell 退出了
+            close(p->master_fd);
+            p->master_fd = -1;
+
+            // 如果是当前活动 pane，切换到另一个
+            if (c->pane == p) {
+              struct window_pane *next =
+                  list_entry(p->link.next, struct window_pane, link);
+              if (&next->link == &c->pane->window->panes) {
+                // 到达链表头，尝试前一个
+                next = list_entry(p->link.prev, struct window_pane, link);
+              }
+              if (&next->link != &c->pane->window->panes) {
+                c->pane = next;
+              }
+            }
+
+            // 从链表移除并销毁
+            list_del(&p->link);
+            pane_destroy(p);
+            pane_removed = 1;
+
+            // 检查是否还有 pane
+            if (list_empty(&c->pane->window->panes)) {
+              c->child_exited = 1;
+              break;
+            }
+          }
+        }
       }
+
+      // 如果有 pane 被移除，重新调整剩余 pane 的尺寸
+      if (pane_removed && !c->child_exited) {
+        unsigned int new_height = c->ws.ws_row - 1;
+        unsigned int new_width = c->ws.ws_col;
+        int pane_count = 0;
+        list_for_each_entry(p, &c->pane->window->panes, link) { pane_count++; }
+        unsigned int pane_width = (new_width - (pane_count - 1)) / pane_count;
+        unsigned int x_offset = 0;
+
+        list_for_each_entry(p, &c->pane->window->panes, link) {
+          pane_resize(p, pane_width, new_height);
+          p->xoff = x_offset;
+          x_offset += pane_width + 1;
+          struct winsize ws = {.ws_row = new_height, .ws_col = pane_width};
+          ioctl(p->master_fd, TIOCSWINSZ, &ws);
+        }
+
+        // 清屏并重新渲染
+        write(STDOUT_FILENO, "\033[2J", 4);
+        render_status_bar(c);
+        list_for_each_entry(p, &c->pane->window->panes, link) {
+          render_pane(p);
+          if (p->link.next != &c->pane->window->panes) {
+            render_pane_borders(p);
+          }
+        }
+      }
+
+      render_status_bar(c);
+
+      // 重新定位光标到当前活动 pane
+      char cursor_buf[32];
+      int clen = snprintf(cursor_buf, sizeof(cursor_buf), "\033[%u;%uH",
+                          c->pane->yoff + c->pane->cy + 1,
+                          c->pane->xoff + c->pane->cx + 1);
+      write(STDOUT_FILENO, cursor_buf, clen);
 
       if (FD_ISSET(STDIN_FILENO, &rfds)) {
         dispatch_event(c, EV_STDIN_READ);
@@ -389,6 +575,50 @@ int client_main(struct client *c) {
   if (detached_session_id != -1) {
     send_server(MSG_DETACH, server_fd, &detached_session_id,
                 sizeof(detached_session_id));
+    // attach: 先读取 pane 数量
+    int pane_count = 0;
+    if (read(server_fd, &pane_count, sizeof(int)) <= 0 || pane_count <= 0) {
+      char buff[100] = {0};
+      snprintf(buff, sizeof(buff),
+               "attach failed: session %d not found or not detached\n",
+               detached_session_id);
+      write(STDOUT_FILENO, buff, strlen(buff));
+      log_warn("attach failed: session %d not found or not detached",
+               detached_session_id);
+      return 0;
+    }
+
+    log_info("attaching to session with %d panes", pane_count);
+
+    // 创建 window
+    struct window *w = window_create("Attached Window");
+    c->ws.ws_row -= 1;
+
+    // 计算每个 pane 的宽度
+    unsigned int pane_width = (c->ws.ws_col - (pane_count - 1)) / pane_count;
+    unsigned int x_offset = 0;
+
+    // 接收所有 pane 的 fd 并创建 pane
+    for (int i = 0; i < pane_count; i++) {
+      int fd = recv_fd(server_fd);
+      if (fd == -1) {
+        log_error("recv_fd failed for pane %d", i);
+        continue;
+      }
+      struct window_pane *p =
+          pane_create(w, pane_width, c->ws.ws_row, x_offset, 0);
+      pane_set_master_fd(p, fd);
+
+      // 通知 PTY 新尺寸
+      struct winsize ws = {.ws_row = c->ws.ws_row, .ws_col = pane_width};
+      ioctl(fd, TIOCSWINSZ, &ws);
+
+      if (i == 0) {
+        c->pane = p;
+        c->master_fd = fd;
+      }
+      x_offset += pane_width + 1;
+    }
 
   } else {
     // 不允许嵌套运行
@@ -403,28 +633,18 @@ int client_main(struct client *c) {
     ws_pty.ws_row -= 1;
     send_server(MSG_RESIZE, server_fd, &ws_pty, sizeof(ws_pty));
     send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
-  }
-  // 获取 server 主进程fd
-  c->master_fd = recv_fd(server_fd);
-  if (c->master_fd == -1) {
-    if (detached_session_id == -1) {
+
+    // 获取 server 主进程fd
+    c->master_fd = recv_fd(server_fd);
+    if (c->master_fd == -1) {
       log_error("recv_fd failed");
       return -1;
-    } else {
-      char buff[100] = {0};
-      snprintf(buff, sizeof(buff),
-               "attach failed: session %d not found or not detached\n",
-               detached_session_id);
-      write(STDOUT_FILENO, buff, strlen(buff));
-      log_warn("attach failed: session %d not found or not detached",
-               detached_session_id);
-      return 0;
     }
+    struct window *w = window_create("New Window");
+    c->ws.ws_row -= 1;
+    c->pane = pane_create(w, c->ws.ws_col, c->ws.ws_row, 0, 0);
+    pane_set_master_fd(c->pane, c->master_fd);
   }
-  struct window *w = window_create("New Window");
-  c->ws.ws_row -= 1;
-  c->pane = pane_create(w, c->ws.ws_col, c->ws.ws_row, 0, 0);
-  pane_set_master_fd(c->pane, c->master_fd);
   // 终端窗口尺寸更新
   struct sigaction sa;
   sa.sa_handler = signal_handler;
@@ -436,6 +656,23 @@ int client_main(struct client *c) {
   dispatch_event(c, EV_ENABLE_RAW_MODE);
   // 清屏，防止残留内容
   write(STDOUT_FILENO, "\033[2J\033[H", 7);
+
+  // 初始渲染所有 pane 和状态栏
+  render_status_bar(c);
+  struct window_pane *p;
+  list_for_each_entry(p, &c->pane->window->panes, link) {
+    render_pane(p);
+    if (p->link.next != &c->pane->window->panes) {
+      render_pane_borders(p);
+    }
+  }
+  // 定位光标
+  char cursor_buf[32];
+  int clen = snprintf(cursor_buf, sizeof(cursor_buf), "\033[%u;%uH",
+                      c->pane->yoff + c->pane->cy + 1,
+                      c->pane->xoff + c->pane->cx + 1);
+  write(STDOUT_FILENO, cursor_buf, clen);
+
   log_info("entering client loop");
   client_loop(c);
 
