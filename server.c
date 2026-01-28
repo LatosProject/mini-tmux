@@ -259,13 +259,9 @@ int server_receive(int fd) {
       free(buf);
       return 1;
     }
-    memcpy(&cur->ws, buf, sizeof(cur->ws)); // 保存尺寸
-    // 通知所有 pane 的 PTY 新尺寸
-    for (int i = 0; i < cur->pane_count; i++) {
-      if (cur->master_fds[i] >= 0) {
-        ioctl(cur->master_fds[i], TIOCSWINSZ, &cur->ws);
-      }
-    }
+    // 只保存整体尺寸，不给 PTY 发 TIOCSWINSZ
+    // （client 负责给每个 pane 发送正确的尺寸）
+    memcpy(&cur->ws, buf, sizeof(cur->ws));
     free(buf);
     return 1;
   case MSG_EXITED:

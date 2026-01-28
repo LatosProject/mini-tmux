@@ -164,30 +164,30 @@ void act_resize(struct client *c, client_event ev) {
   }
   struct winsize ws_pane = c->ws;
   ws_pane.ws_row -= 1;
-  ioctl(c->master_fd, TIOCSWINSZ, &ws_pane);
 
   unsigned int new_height = c->ws.ws_row - 1; // 留一行给状态栏
   unsigned int new_width = c->ws.ws_col;
 
-  // 遍历所有 pane，按比例调整
+  // 遍历所有 pane，计算新尺寸
   struct window_pane *p;
   int pane_count = 0;
   list_for_each_entry(p, &c->pane->window->panes, link) { pane_count++; }
   unsigned int pane_width = (new_width - pane_count + 1) / pane_count;
   unsigned int x_offset = 0;
 
+  // 调整 pane 结构大小，并通知每个 PTY 正确的尺寸
   list_for_each_entry(p, &c->pane->window->panes, link) {
     pane_resize(p, pane_width, new_height);
     p->xoff = x_offset;
     x_offset += pane_width + 1;
 
-    // 通知 PTY 新尺寸
+    // 通知 PTY 这个 pane 的实际尺寸
     struct winsize ws = {.ws_row = new_height, .ws_col = pane_width};
     ioctl(p->master_fd, TIOCSWINSZ, &ws);
   }
 
-  // 清屏，防止残留内容
-  write(STDOUT_FILENO, "\033[2J", 4);
+  // 清屏并移动光标到左上角
+  write(STDOUT_FILENO, "\033[2J\033[H", 7);
 
   // 重新渲染所有 pane 和边框
   list_for_each_entry(p, &c->pane->window->panes, link) {
@@ -198,16 +198,15 @@ void act_resize(struct client *c, client_event ev) {
   }
   render_status_bar(c);
 
-  // 通知 server 新尺寸
+  // 通知 server 保存整体尺寸（但 server 不再给 PTY 发 TIOCSWINSZ）
   send_server(MSG_RESIZE, c->server_fd, &ws_pane, sizeof(ws_pane));
   return;
 }
 
 void act_child_exit(struct client *c, client_event ev) {
   c->child_exited = 1;
-  char msg[100] = {0};
-  // snprintf(msg, sizeof(msg), "Child exited with PID: %d\n", c->slave_pid);
-  // write(STDOUT_FILENO, msg, strlen(msg));
+  // 切换回主屏幕缓冲区
+  write(STDOUT_FILENO, "\033[?1049l", 8);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
 }
 
@@ -286,6 +285,8 @@ void act_stdin_read(struct client *c, client_event ev) {
 void act_detach(struct client *c, client_event ev) {
   send_server(MSG_DETACH, server_fd, NULL, 0);
   c->child_exited = 1;
+  // 切换回主屏幕缓冲区
+  write(STDOUT_FILENO, "\033[?1049l", 8);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->orig_termios));
 }
 /*
@@ -661,7 +662,9 @@ int client_main(struct client *c) {
   sigaction(SIGCHLD, &sa, NULL);
 
   dispatch_event(c, EV_ENABLE_RAW_MODE);
-  // 清屏，防止残留内容
+  // 切换到备用屏幕缓冲区（防止滚动看到之前的历史）
+  write(STDOUT_FILENO, "\033[?1049h", 8);
+  // 清屏
   write(STDOUT_FILENO, "\033[2J\033[H", 7);
 
   // 初始渲染所有 pane 和状态栏

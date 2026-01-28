@@ -113,7 +113,7 @@ void render_status_bar(struct client *c) {
   char buf[256];
   unsigned int row = c->ws.ws_row + 1; // 最后一行
   unsigned int cols = c->ws.ws_col;
-
+  write(STDOUT_FILENO, CURSOR_HIDE, 6);
   // 移动到最后一行，蓝色背景白色文字
   int len = snprintf(buf, sizeof(buf), "\033[%u;1H\033[44;97m", row);
   write(STDOUT_FILENO, buf, len);
@@ -136,6 +136,7 @@ void render_status_bar(struct client *c) {
 
   // 重置属性
   write(STDOUT_FILENO, "\033[0m", 4);
+  write(STDOUT_FILENO, CURSOR_SHOW, 6);
 }
 void render_pane_borders(struct window_pane *p) {
   write(STDOUT_FILENO, CURSOR_HIDE, 6);
