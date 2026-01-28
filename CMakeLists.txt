@@ -1,7 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
-project(mini-tmux)
+project(mini-tmux VERSION 0.3.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_definitions(_DEFAULT_SOURCE)
+
+# 检测目标架构
+if(NOT DEFINED TARGET_ARCH)
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+# 架构名称映射
+if(TARGET_ARCH STREQUAL "x86_64")
+    set(ARCH_NAME "amd64")
+elseif(TARGET_ARCH STREQUAL "aarch64")
+    set(ARCH_NAME "arm64")
+else()
+    set(ARCH_NAME ${TARGET_ARCH})
+endif()
+
+message(STATUS "Building for architecture: ${ARCH_NAME}")
+message(STATUS "Version: ${PROJECT_VERSION}")
 
 # libvterm sources
 set(VTERM_SOURCES
@@ -18,5 +35,14 @@ set(VTERM_SOURCES
 
 set(SOURCES main.c client.c spawn.c util.c server.c log.c window.c render.c input.c)
 
-add_executable(mini-tmux ${SOURCES} ${VTERM_SOURCES})
-target_include_directories(mini-tmux PRIVATE vendor/vterm)
+# 设置输出文件名：mini-tmux-版本-架构
+set(OUTPUT_NAME "mini-tmux-${PROJECT_VERSION}-${ARCH_NAME}")
+add_executable(${OUTPUT_NAME} ${SOURCES} ${VTERM_SOURCES})
+target_include_directories(${OUTPUT_NAME} PRIVATE vendor/vterm)
+
+# 同时创建一个不带版本的符号链接（可选）
+add_custom_command(TARGET ${OUTPUT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${OUTPUT_NAME} mini-tmux
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Creating symlink: mini-tmux -> ${OUTPUT_NAME}"
+)

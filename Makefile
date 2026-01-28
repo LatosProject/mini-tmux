@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named mini-tmux
+# Target rules for targets named mini-tmux-0.3.0-amd64
 
 # Build rule for target.
-mini-tmux: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 mini-tmux
-.PHONY : mini-tmux
+mini-tmux-0.3.0-amd64: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 mini-tmux-0.3.0-amd64
+.PHONY : mini-tmux-0.3.0-amd64
 
 # fast build rule for target.
-mini-tmux/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/build
-.PHONY : mini-tmux/fast
+mini-tmux-0.3.0-amd64/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/build
+.PHONY : mini-tmux-0.3.0-amd64/fast
 
 client.o: client.c.o
 .PHONY : client.o
 
 # target to build an object file
 client.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/client.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/client.c.o
 .PHONY : client.c.o
 
 client.i: client.c.i
@@ -142,7 +142,7 @@ client.i: client.c.i
 
 # target to preprocess a source file
 client.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/client.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/client.c.i
 .PHONY : client.c.i
 
 client.s: client.c.s
@@ -150,7 +150,7 @@ client.s: client.c.s
 
 # target to generate assembly for a file
 client.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/client.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/client.c.s
 .PHONY : client.c.s
 
 input.o: input.c.o
@@ -158,7 +158,7 @@ input.o: input.c.o
 
 # target to build an object file
 input.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/input.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/input.c.o
 .PHONY : input.c.o
 
 input.i: input.c.i
@@ -166,7 +166,7 @@ input.i: input.c.i
 
 # target to preprocess a source file
 input.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/input.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/input.c.i
 .PHONY : input.c.i
 
 input.s: input.c.s
@@ -174,7 +174,7 @@ input.s: input.c.s
 
 # target to generate assembly for a file
 input.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/input.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/input.c.s
 .PHONY : input.c.s
 
 log.o: log.c.o
@@ -182,7 +182,7 @@ log.o: log.c.o
 
 # target to build an object file
 log.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/log.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/log.c.o
 .PHONY : log.c.o
 
 log.i: log.c.i
@@ -190,7 +190,7 @@ log.i: log.c.i
 
 # target to preprocess a source file
 log.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/log.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/log.c.i
 .PHONY : log.c.i
 
 log.s: log.c.s
@@ -198,7 +198,7 @@ log.s: log.c.s
 
 # target to generate assembly for a file
 log.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/log.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/log.c.s
 .PHONY : log.c.s
 
 main.o: main.c.o
@@ -206,7 +206,7 @@ main.o: main.c.o
 
 # target to build an object file
 main.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/main.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/main.c.o
 .PHONY : main.c.o
 
 main.i: main.c.i
@@ -214,7 +214,7 @@ main.i: main.c.i
 
 # target to preprocess a source file
 main.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/main.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/main.c.i
 .PHONY : main.c.i
 
 main.s: main.c.s
@@ -222,7 +222,7 @@ main.s: main.c.s
 
 # target to generate assembly for a file
 main.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/main.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/main.c.s
 .PHONY : main.c.s
 
 render.o: render.c.o
@@ -230,7 +230,7 @@ render.o: render.c.o
 
 # target to build an object file
 render.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/render.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/render.c.o
 .PHONY : render.c.o
 
 render.i: render.c.i
@@ -238,7 +238,7 @@ render.i: render.c.i
 
 # target to preprocess a source file
 render.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/render.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/render.c.i
 .PHONY : render.c.i
 
 render.s: render.c.s
@@ -246,7 +246,7 @@ render.s: render.c.s
 
 # target to generate assembly for a file
 render.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/render.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/render.c.s
 .PHONY : render.c.s
 
 server.o: server.c.o
@@ -254,7 +254,7 @@ server.o: server.c.o
 
 # target to build an object file
 server.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/server.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/server.c.o
 .PHONY : server.c.o
 
 server.i: server.c.i
@@ -262,7 +262,7 @@ server.i: server.c.i
 
 # target to preprocess a source file
 server.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/server.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/server.c.i
 .PHONY : server.c.i
 
 server.s: server.c.s
@@ -270,7 +270,7 @@ server.s: server.c.s
 
 # target to generate assembly for a file
 server.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/server.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/server.c.s
 .PHONY : server.c.s
 
 spawn.o: spawn.c.o
@@ -278,7 +278,7 @@ spawn.o: spawn.c.o
 
 # target to build an object file
 spawn.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/spawn.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/spawn.c.o
 .PHONY : spawn.c.o
 
 spawn.i: spawn.c.i
@@ -286,7 +286,7 @@ spawn.i: spawn.c.i
 
 # target to preprocess a source file
 spawn.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/spawn.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/spawn.c.i
 .PHONY : spawn.c.i
 
 spawn.s: spawn.c.s
@@ -294,7 +294,7 @@ spawn.s: spawn.c.s
 
 # target to generate assembly for a file
 spawn.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/spawn.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/spawn.c.s
 .PHONY : spawn.c.s
 
 util.o: util.c.o
@@ -302,7 +302,7 @@ util.o: util.c.o
 
 # target to build an object file
 util.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/util.c.o
 .PHONY : util.c.o
 
 util.i: util.c.i
@@ -310,7 +310,7 @@ util.i: util.c.i
 
 # target to preprocess a source file
 util.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/util.c.i
 .PHONY : util.c.i
 
 util.s: util.c.s
@@ -318,7 +318,7 @@ util.s: util.c.s
 
 # target to generate assembly for a file
 util.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/util.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/util.c.s
 .PHONY : util.c.s
 
 vendor/vterm/encoding.o: vendor/vterm/encoding.c.o
@@ -326,7 +326,7 @@ vendor/vterm/encoding.o: vendor/vterm/encoding.c.o
 
 # target to build an object file
 vendor/vterm/encoding.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/encoding.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/encoding.c.o
 .PHONY : vendor/vterm/encoding.c.o
 
 vendor/vterm/encoding.i: vendor/vterm/encoding.c.i
@@ -334,7 +334,7 @@ vendor/vterm/encoding.i: vendor/vterm/encoding.c.i
 
 # target to preprocess a source file
 vendor/vterm/encoding.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/encoding.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/encoding.c.i
 .PHONY : vendor/vterm/encoding.c.i
 
 vendor/vterm/encoding.s: vendor/vterm/encoding.c.s
@@ -342,7 +342,7 @@ vendor/vterm/encoding.s: vendor/vterm/encoding.c.s
 
 # target to generate assembly for a file
 vendor/vterm/encoding.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/encoding.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/encoding.c.s
 .PHONY : vendor/vterm/encoding.c.s
 
 vendor/vterm/keyboard.o: vendor/vterm/keyboard.c.o
@@ -350,7 +350,7 @@ vendor/vterm/keyboard.o: vendor/vterm/keyboard.c.o
 
 # target to build an object file
 vendor/vterm/keyboard.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/keyboard.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/keyboard.c.o
 .PHONY : vendor/vterm/keyboard.c.o
 
 vendor/vterm/keyboard.i: vendor/vterm/keyboard.c.i
@@ -358,7 +358,7 @@ vendor/vterm/keyboard.i: vendor/vterm/keyboard.c.i
 
 # target to preprocess a source file
 vendor/vterm/keyboard.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/keyboard.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/keyboard.c.i
 .PHONY : vendor/vterm/keyboard.c.i
 
 vendor/vterm/keyboard.s: vendor/vterm/keyboard.c.s
@@ -366,7 +366,7 @@ vendor/vterm/keyboard.s: vendor/vterm/keyboard.c.s
 
 # target to generate assembly for a file
 vendor/vterm/keyboard.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/keyboard.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/keyboard.c.s
 .PHONY : vendor/vterm/keyboard.c.s
 
 vendor/vterm/mouse.o: vendor/vterm/mouse.c.o
@@ -374,7 +374,7 @@ vendor/vterm/mouse.o: vendor/vterm/mouse.c.o
 
 # target to build an object file
 vendor/vterm/mouse.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/mouse.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/mouse.c.o
 .PHONY : vendor/vterm/mouse.c.o
 
 vendor/vterm/mouse.i: vendor/vterm/mouse.c.i
@@ -382,7 +382,7 @@ vendor/vterm/mouse.i: vendor/vterm/mouse.c.i
 
 # target to preprocess a source file
 vendor/vterm/mouse.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/mouse.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/mouse.c.i
 .PHONY : vendor/vterm/mouse.c.i
 
 vendor/vterm/mouse.s: vendor/vterm/mouse.c.s
@@ -390,7 +390,7 @@ vendor/vterm/mouse.s: vendor/vterm/mouse.c.s
 
 # target to generate assembly for a file
 vendor/vterm/mouse.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/mouse.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/mouse.c.s
 .PHONY : vendor/vterm/mouse.c.s
 
 vendor/vterm/parser.o: vendor/vterm/parser.c.o
@@ -398,7 +398,7 @@ vendor/vterm/parser.o: vendor/vterm/parser.c.o
 
 # target to build an object file
 vendor/vterm/parser.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/parser.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/parser.c.o
 .PHONY : vendor/vterm/parser.c.o
 
 vendor/vterm/parser.i: vendor/vterm/parser.c.i
@@ -406,7 +406,7 @@ vendor/vterm/parser.i: vendor/vterm/parser.c.i
 
 # target to preprocess a source file
 vendor/vterm/parser.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/parser.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/parser.c.i
 .PHONY : vendor/vterm/parser.c.i
 
 vendor/vterm/parser.s: vendor/vterm/parser.c.s
@@ -414,7 +414,7 @@ vendor/vterm/parser.s: vendor/vterm/parser.c.s
 
 # target to generate assembly for a file
 vendor/vterm/parser.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/parser.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/parser.c.s
 .PHONY : vendor/vterm/parser.c.s
 
 vendor/vterm/pen.o: vendor/vterm/pen.c.o
@@ -422,7 +422,7 @@ vendor/vterm/pen.o: vendor/vterm/pen.c.o
 
 # target to build an object file
 vendor/vterm/pen.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/pen.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/pen.c.o
 .PHONY : vendor/vterm/pen.c.o
 
 vendor/vterm/pen.i: vendor/vterm/pen.c.i
@@ -430,7 +430,7 @@ vendor/vterm/pen.i: vendor/vterm/pen.c.i
 
 # target to preprocess a source file
 vendor/vterm/pen.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/pen.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/pen.c.i
 .PHONY : vendor/vterm/pen.c.i
 
 vendor/vterm/pen.s: vendor/vterm/pen.c.s
@@ -438,7 +438,7 @@ vendor/vterm/pen.s: vendor/vterm/pen.c.s
 
 # target to generate assembly for a file
 vendor/vterm/pen.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/pen.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/pen.c.s
 .PHONY : vendor/vterm/pen.c.s
 
 vendor/vterm/screen.o: vendor/vterm/screen.c.o
@@ -446,7 +446,7 @@ vendor/vterm/screen.o: vendor/vterm/screen.c.o
 
 # target to build an object file
 vendor/vterm/screen.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/screen.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/screen.c.o
 .PHONY : vendor/vterm/screen.c.o
 
 vendor/vterm/screen.i: vendor/vterm/screen.c.i
@@ -454,7 +454,7 @@ vendor/vterm/screen.i: vendor/vterm/screen.c.i
 
 # target to preprocess a source file
 vendor/vterm/screen.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/screen.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/screen.c.i
 .PHONY : vendor/vterm/screen.c.i
 
 vendor/vterm/screen.s: vendor/vterm/screen.c.s
@@ -462,7 +462,7 @@ vendor/vterm/screen.s: vendor/vterm/screen.c.s
 
 # target to generate assembly for a file
 vendor/vterm/screen.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/screen.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/screen.c.s
 .PHONY : vendor/vterm/screen.c.s
 
 vendor/vterm/state.o: vendor/vterm/state.c.o
@@ -470,7 +470,7 @@ vendor/vterm/state.o: vendor/vterm/state.c.o
 
 # target to build an object file
 vendor/vterm/state.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/state.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/state.c.o
 .PHONY : vendor/vterm/state.c.o
 
 vendor/vterm/state.i: vendor/vterm/state.c.i
@@ -478,7 +478,7 @@ vendor/vterm/state.i: vendor/vterm/state.c.i
 
 # target to preprocess a source file
 vendor/vterm/state.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/state.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/state.c.i
 .PHONY : vendor/vterm/state.c.i
 
 vendor/vterm/state.s: vendor/vterm/state.c.s
@@ -486,7 +486,7 @@ vendor/vterm/state.s: vendor/vterm/state.c.s
 
 # target to generate assembly for a file
 vendor/vterm/state.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/state.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/state.c.s
 .PHONY : vendor/vterm/state.c.s
 
 vendor/vterm/unicode.o: vendor/vterm/unicode.c.o
@@ -494,7 +494,7 @@ vendor/vterm/unicode.o: vendor/vterm/unicode.c.o
 
 # target to build an object file
 vendor/vterm/unicode.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/unicode.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/unicode.c.o
 .PHONY : vendor/vterm/unicode.c.o
 
 vendor/vterm/unicode.i: vendor/vterm/unicode.c.i
@@ -502,7 +502,7 @@ vendor/vterm/unicode.i: vendor/vterm/unicode.c.i
 
 # target to preprocess a source file
 vendor/vterm/unicode.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/unicode.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/unicode.c.i
 .PHONY : vendor/vterm/unicode.c.i
 
 vendor/vterm/unicode.s: vendor/vterm/unicode.c.s
@@ -510,7 +510,7 @@ vendor/vterm/unicode.s: vendor/vterm/unicode.c.s
 
 # target to generate assembly for a file
 vendor/vterm/unicode.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/unicode.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/unicode.c.s
 .PHONY : vendor/vterm/unicode.c.s
 
 vendor/vterm/vterm.o: vendor/vterm/vterm.c.o
@@ -518,7 +518,7 @@ vendor/vterm/vterm.o: vendor/vterm/vterm.c.o
 
 # target to build an object file
 vendor/vterm/vterm.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/vterm.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/vterm.c.o
 .PHONY : vendor/vterm/vterm.c.o
 
 vendor/vterm/vterm.i: vendor/vterm/vterm.c.i
@@ -526,7 +526,7 @@ vendor/vterm/vterm.i: vendor/vterm/vterm.c.i
 
 # target to preprocess a source file
 vendor/vterm/vterm.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/vterm.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/vterm.c.i
 .PHONY : vendor/vterm/vterm.c.i
 
 vendor/vterm/vterm.s: vendor/vterm/vterm.c.s
@@ -534,7 +534,7 @@ vendor/vterm/vterm.s: vendor/vterm/vterm.c.s
 
 # target to generate assembly for a file
 vendor/vterm/vterm.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/vendor/vterm/vterm.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/vendor/vterm/vterm.c.s
 .PHONY : vendor/vterm/vterm.c.s
 
 window.o: window.c.o
@@ -542,7 +542,7 @@ window.o: window.c.o
 
 # target to build an object file
 window.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/window.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/window.c.o
 .PHONY : window.c.o
 
 window.i: window.c.i
@@ -550,7 +550,7 @@ window.i: window.c.i
 
 # target to preprocess a source file
 window.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/window.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/window.c.i
 .PHONY : window.c.i
 
 window.s: window.c.s
@@ -558,7 +558,7 @@ window.s: window.c.s
 
 # target to generate assembly for a file
 window.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux.dir/build.make CMakeFiles/mini-tmux.dir/window.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini-tmux-0.3.0-amd64.dir/build.make CMakeFiles/mini-tmux-0.3.0-amd64.dir/window.c.s
 .PHONY : window.c.s
 
 # Help Target
@@ -569,7 +569,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... mini-tmux"
+	@echo "... mini-tmux-0.3.0-amd64"
 	@echo "... client.o"
 	@echo "... client.i"
 	@echo "... client.s"
