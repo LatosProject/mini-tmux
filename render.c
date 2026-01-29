@@ -126,7 +126,7 @@ void render_status_bar(struct client *c) {
   // 用空格填满整行
   for (unsigned int i = strlen(buf); i < cols; i++) {
     if (i >= cols - 17) {
-      int len = snprintf(buf, sizeof(buf), "mini-tmux v0.3.0");
+      int len = snprintf(buf, sizeof(buf), "mini-tmux v0.3.1");
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);
       break;

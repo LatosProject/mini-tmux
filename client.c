@@ -4,6 +4,7 @@
 #define _GNU_SOURCE
 #include "client.h"
 #include "input.h"
+#include "keyboard.c"
 #include "log.h"
 #include "main.h"
 #include "server.h"
@@ -239,43 +240,17 @@ void act_stdin_read(struct client *c, client_event ev) {
     dispatch_event(c, EV_EOF_STDIN);
     return;
   }
-
-  // 检测 Ctrl+B D 快捷键序列进行 detach
-  // Ctrl+B = 0x02, D/d = 0x44/0x64
   static int ctrl_b_pressed = 0;
 
   for (ssize_t i = 0; i < n; i++) {
-    if (buff[i] == 0x02) { // ctrl+b
+    if (buff[i] == 0x02 && !ctrl_b_pressed) { // ctrl+b
       ctrl_b_pressed = 1;
       continue;
     }
-
     if (ctrl_b_pressed) {
-      if (buff[i] == 'd' || buff[i] == 'D') {
-        ctrl_b_pressed = 0;
-        dispatch_event(c, EV_DETACHED);
-        return;
-      } else if (buff[i] == '%') {
-        // 处理 Ctrl+B %
-        dispatch_event(c, EV_PANE_SPLIT);
-        ctrl_b_pressed = 0;
-      } else if (buff[i] == 'o' || buff[i] == 'O') {
-        // Ctrl+B o: 切换到下一个 pane
-        ctrl_b_pressed = 0;
-        struct window_pane *next =
-            list_entry(c->pane->link.next, struct window_pane, link);
-        if (&next->link == &c->pane->window->panes) {
-          // 到达链表头，回到第一个 pane
-          next =
-              list_entry(c->pane->window->panes.next, struct window_pane, link);
-        }
-        c->pane = next;
-      } else {
-        char cb = 0x02;
-        write(c->pane->master_fd, &cb, 1);
-        write(c->pane->master_fd, &buff[i], 1);
-        ctrl_b_pressed = 0;
-      }
+      enum key_table table = KEY_PREFIX;
+      handle_key(c, table, buff[i]);
+      ctrl_b_pressed = 0;
     } else {
       write(c->pane->master_fd, &buff[i], 1);
     }
@@ -531,7 +506,7 @@ void client_loop(struct client *c) {
 int client_main(struct client *c) {
   log_init("client");
   log_info("client starting");
-
+  keybind_init();
   server_fd = client_connect(socket_path);
   if (server_fd == -1) {
     log_error("client connect failed");

@@ -18,7 +18,7 @@ void log_close(void);
 void log_set_level(log_level_t level);
 
 // 日志开关
-// #define ENABLE_LOG
+#define ENABLE_LOG
 #ifdef ENABLE_LOG
 // 日志宏
 #define log_debug(...) log_write(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
