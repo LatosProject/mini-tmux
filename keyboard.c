@@ -32,7 +32,7 @@ void next_pane(struct client *c) {
 
 static struct keybind keybinds[MAX_KEYBINDS];
 struct action_map actions[] = {
-    {"detach", detach_session},
+    {"detach_session", detach_session},
     {"new_pane", new_pane},
     {"next_pane", next_pane},
 };

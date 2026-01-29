@@ -1,0 +1,110 @@
+[
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/main.c.o -c /home/latos/project/mini-tmux/main.c",
+  "file": "/home/latos/project/mini-tmux/main.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/main.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/client.c.o -c /home/latos/project/mini-tmux/client.c",
+  "file": "/home/latos/project/mini-tmux/client.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/client.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/spawn.c.o -c /home/latos/project/mini-tmux/spawn.c",
+  "file": "/home/latos/project/mini-tmux/spawn.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/spawn.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/util.c.o -c /home/latos/project/mini-tmux/util.c",
+  "file": "/home/latos/project/mini-tmux/util.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/util.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/server.c.o -c /home/latos/project/mini-tmux/server.c",
+  "file": "/home/latos/project/mini-tmux/server.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/server.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/log.c.o -c /home/latos/project/mini-tmux/log.c",
+  "file": "/home/latos/project/mini-tmux/log.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/log.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/window.c.o -c /home/latos/project/mini-tmux/window.c",
+  "file": "/home/latos/project/mini-tmux/window.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/window.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/render.c.o -c /home/latos/project/mini-tmux/render.c",
+  "file": "/home/latos/project/mini-tmux/render.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/render.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/input.c.o -c /home/latos/project/mini-tmux/input.c",
+  "file": "/home/latos/project/mini-tmux/input.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/input.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/vterm.c.o -c /home/latos/project/mini-tmux/vendor/vterm/vterm.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/vterm.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/vterm.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/encoding.c.o -c /home/latos/project/mini-tmux/vendor/vterm/encoding.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/encoding.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/encoding.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/keyboard.c.o -c /home/latos/project/mini-tmux/vendor/vterm/keyboard.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/keyboard.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/keyboard.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/mouse.c.o -c /home/latos/project/mini-tmux/vendor/vterm/mouse.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/mouse.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/mouse.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/parser.c.o -c /home/latos/project/mini-tmux/vendor/vterm/parser.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/parser.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/parser.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/pen.c.o -c /home/latos/project/mini-tmux/vendor/vterm/pen.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/pen.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/pen.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/screen.c.o -c /home/latos/project/mini-tmux/vendor/vterm/screen.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/screen.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/screen.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/state.c.o -c /home/latos/project/mini-tmux/vendor/vterm/state.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/state.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/state.c.o"
+},
+{
+  "directory": "/home/latos/project/mini-tmux",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/home/latos/project/mini-tmux/vendor/vterm  -o CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/unicode.c.o -c /home/latos/project/mini-tmux/vendor/vterm/unicode.c",
+  "file": "/home/latos/project/mini-tmux/vendor/vterm/unicode.c",
+  "output": "CMakeFiles/mini-tmux-0.3.1-amd64.dir/vendor/vterm/unicode.c.o"
+}
+]
