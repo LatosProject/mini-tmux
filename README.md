@@ -66,6 +66,24 @@ make
 | `Ctrl+B %` | 垂直分割窗格 |
 | `Ctrl+B o` | 切换到下一个窗格 |
 
+### 自定义快捷键
+
+可以通过配置文件自定义快捷键，配置文件路径：`/tmp/mini-tmux-<uid>/keybinds.conf`
+
+配置格式：`key table action`
+
+```conf
+# 示例配置
+1 KEY_PREFIX new_pane
+2 KEY_PREFIX next_pane
+q KEY_PREFIX detach
+```
+
+可用的 action：
+- `detach` - 分离会话
+- `new_pane` - 新建窗格
+- `next_pane` - 切换到下一个窗格
+
 ## 项目架构
 
 ```
