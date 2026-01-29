@@ -2,6 +2,7 @@
 #include "client.h"
 #include "list.h"
 #include "window.h"
+#include "version.h"
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -126,7 +127,7 @@ void render_status_bar(struct client *c) {
   // 用空格填满整行
   for (unsigned int i = strlen(buf); i < cols; i++) {
     if (i >= cols - 17) {
-      int len = snprintf(buf, sizeof(buf), "mini-tmux v0.3.1");
+      int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);
       break;
