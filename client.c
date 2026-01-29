@@ -243,7 +243,11 @@ void act_stdin_read(struct client *c, client_event ev) {
   static int ctrl_b_pressed = 0;
 
   for (ssize_t i = 0; i < n; i++) {
-    if (buff[i] == 0x02 && !ctrl_b_pressed) { // ctrl+b
+    if (buff[i] == 0x02) { // ctrl+b
+      if (ctrl_b_pressed) {
+        // Ctrl+B + Ctrl+B = 发送一个真正的 Ctrl+B 到 PTY
+        write(c->pane->master_fd, &buff[i], 1);
+      }
       ctrl_b_pressed = 1;
       continue;
     }

@@ -39,7 +39,6 @@ struct action_map actions[] = {
 int keybind_count = 0;
 
 void handle_key(struct client *c, enum key_table table, char key) {
-  char buff;
   int lower_key = (int)key;
   if (isalpha(key) && isupper(key)) {
     lower_key = tolower(key);
@@ -49,10 +48,11 @@ void handle_key(struct client *c, enum key_table table, char key) {
       keybinds[i].handler(c);
       return;
     }
-    char cb = 0x02;
-    write(c->pane->master_fd, &cb, 1);
-    write(c->pane->master_fd, &buff, 1);
   }
+  // 没有匹配的快捷键，发送 Ctrl+B + 原字符到 PTY
+  char cb = 0x02;
+  write(c->pane->master_fd, &cb, 1);
+  write(c->pane->master_fd, &key, 1);
 }
 void keybind_init() {
   keybinds[keybind_count++] = (struct keybind){'d', KEY_PREFIX, detach_session};
