@@ -61,8 +61,13 @@ int main(int argc, char *argv[]) {
   // 创建目录
   char dir[100] = {0};
   snprintf(dir, sizeof(dir), "%smini-tmux-%d", MINI_TMUX_SOCK, uid);
-  if (mkdir(dir, 0755) != 0 && errno != EEXIST) {
+  if (mkdir(dir, 0700) != 0 && errno != EEXIST) {
     perror("mkdir failed");
+    return -1;
+  }
+  struct stat info;
+  if (lstat(dir, &info) != 0 || !(info.st_mode & S_IFDIR)) {
+    perror("stat");
     return -1;
   }
 
