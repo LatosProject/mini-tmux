@@ -27,8 +27,8 @@ void grid_scroll_down(struct grid *g, unsigned int lines) {
 // 向上滚动（查看历史）
 void grid_scroll_up(struct grid *g, unsigned int lines) {
   // 可滚动的最大行数是 min(history_count, history_size)
-  unsigned int max_scroll = (g->history_count < g->history_size)
-                            ? g->history_count : g->history_size;
+  unsigned int max_scroll =
+      (g->history_count < g->history_size) ? g->history_count : g->history_size;
   if (g->scroll_offset + lines > max_scroll)
     g->scroll_offset = max_scroll;
   else
@@ -52,7 +52,7 @@ void grid_push_line_to_history(struct grid *g, unsigned int line) {
   // 复制该行到历史
   memcpy(&g->history_cells[dst_line * g->width], &g->cells[line * g->width],
          g->width * sizeof(struct cell));
-  g->history_count++;  // 始终递增，用于环形缓冲区索引
+  g->history_count++; // 始终递增，用于环形缓冲区索引
 }
 
 struct cell *grid_get_display_line(struct grid *g, unsigned int y) {
@@ -63,13 +63,13 @@ struct cell *grid_get_display_line(struct grid *g, unsigned int y) {
     return NULL;
 
   // 可用的历史行数
-  unsigned int available = (g->history_count < g->history_size)
-                           ? g->history_count : g->history_size;
+  unsigned int available =
+      (g->history_count < g->history_size) ? g->history_count : g->history_size;
 
   int history_line = (int)available - (int)g->scroll_offset + (int)y;
   if (history_line < 0)
-    return NULL;                           // 滚动太远，没有那么多历史
-  if (history_line >= (int)available) {    // 非历史记录部分
+    return NULL;                        // 滚动太远，没有那么多历史
+  if (history_line >= (int)available) { // 非历史记录部分
     int screen_y = history_line - available;
     return &g->cells[screen_y * g->width];
   }
@@ -224,7 +224,7 @@ void render_status_bar(struct client *c) {
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);
       break;
-    } else if (i >= cols - 36 && c->pane->grid->scroll_offset) {
+    } else if (i >= cols - 29 && c->pane->grid->scroll_offset) {
       int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);
@@ -237,7 +237,14 @@ void render_status_bar(struct client *c) {
   write(STDOUT_FILENO, "\033[K", 3);
   // 重置属性
   write(STDOUT_FILENO, "\033[0m", 4);
-  write(STDOUT_FILENO, CURSOR_SHOW, 6);
+  if (c->pane->grid->scroll_offset == 0) {
+    // 光标移动到 pane 内的正确位置 （vt解析）
+    int clen = snprintf(buf, sizeof(buf), "\033[%u;%uH",
+                        c->pane->yoff + c->pane->cy + 1,
+                        c->pane->xoff + c->pane->cx + 1);
+    write(STDOUT_FILENO, buf, clen);
+    write(STDOUT_FILENO, CURSOR_SHOW, 6);
+  }
 }
 void render_pane_borders(struct window_pane *p) {
   write(STDOUT_FILENO, CURSOR_HIDE, 6);
