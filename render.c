@@ -204,7 +204,7 @@ void render_status_bar(struct client *c) {
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);
       break;
-    } else if (i >= cols - 29 && c->pane->grid->scroll_offset) {
+    } else if (i >= cols - 36 && c->pane->grid->scroll_offset) {
       int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);
@@ -213,6 +213,8 @@ void render_status_bar(struct client *c) {
     write(STDOUT_FILENO, " ", 1);
   }
 
+  // 清除到行尾，防止残留字符
+  write(STDOUT_FILENO, "\033[K", 3);
   // 重置属性
   write(STDOUT_FILENO, "\033[0m", 4);
   write(STDOUT_FILENO, CURSOR_SHOW, 6);
