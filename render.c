@@ -1,14 +1,75 @@
 #include "render.h"
 #include "client.h"
 #include "list.h"
-#include "window.h"
 #include "version.h"
+#include "window.h"
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #define CURSOR_HIDE "\033[?25l"
 #define CURSOR_SHOW "\033[?25h"
+#define DEFAULT_HISTORY_SIZE 1000 // 默认保存1000行历史
+
+void grid_init_history(struct grid *g, unsigned int max_lines) {
+  g->history_cells = calloc(max_lines * g->width, sizeof(struct cell));
+  g->history_size = DEFAULT_HISTORY_SIZE;
+  g->scroll_offset = 0;
+  g->history_count = 0;
+}
+// 向下滚动（返回当前）
+void grid_scroll_down(struct grid *g, unsigned int lines) {
+  if (lines > g->scroll_offset)
+    g->scroll_offset = 0;
+  else
+    g->scroll_offset -= lines;
+}
+// 向上滚动（查看历史）
+void grid_scroll_up(struct grid *g, unsigned int lines) {
+  if (g->scroll_offset + lines > g->history_count)
+    g->scroll_offset = g->history_count;
+  else
+    g->scroll_offset += lines;
+}
+
+void grid_free_history(struct grid *g) {
+  if (g->history_cells) {
+    free(g->history_cells);
+    g->history_cells = NULL;
+  }
+  g->history_count = 0;
+  g->scroll_offset = 0;
+}
+
+void grid_push_line_to_history(struct grid *g, unsigned int line) {
+  if (!g->history_cells || g->history_size == 0)
+    return;
+  // 计算历史中的目标位置（环形缓冲区）
+  unsigned int dst_line = g->history_count % g->history_size;
+  // 复制该行到历史
+  memcpy(&g->history_cells[dst_line * g->width], &g->cells[line * g->width],
+         g->width * sizeof(struct cell));
+  if (g->history_count < g->history_size)
+    g->history_count++;
+}
+
+struct cell *grid_get_display_line(struct grid *g, unsigned int y) {
+  if (g->scroll_offset == 0) { // 未滚动
+    return &g->cells[y * g->width];
+  }
+  if (!g->history_count || g->history_size == 0)
+    return NULL;
+  int history_line = (int)g->history_count - (int)g->scroll_offset + (int)y;
+  if (history_line < 0)
+    return NULL;                               // 滚动太远，没有那么多历史
+  if (history_line >= (int)g->history_count) { // 非历史记录部分
+    int screen_y = history_line - g->history_count;
+    return &g->cells[screen_y * g->width];
+  }
+  unsigned int actual = history_line % g->history_size; // 确保不会越界
+  return &g->history_cells[actual * g->width];          // 历史记录部分
+}
+
 void render_init(struct screen *s) {
   s->title = "\0";
   s->path = NULL;
@@ -52,7 +113,11 @@ void render_pane(struct window_pane *p) {
     write(STDOUT_FILENO, buf, len);
 
     for (unsigned int x = 0; x < p->sx;) {
-      struct cell *c = &g->cells[y * g->width + x];
+      // struct cell *c = &g->cells[y * g->width + x];
+      struct cell *line = grid_get_display_line(g, y);
+      if (!line)
+        continue;
+      struct cell *c = &line[x];
 
       // 检查是否需要更新颜色/属性
       int need_update = (c->fg != last_fg || c->bg != last_bg ||
@@ -102,13 +167,17 @@ void render_pane(struct window_pane *p) {
   // 重置颜色
   write(STDOUT_FILENO, "\033[0m", 4);
 
-  // 光标移动到 pane 内的正确位置 （vt解析）
-  int clen = snprintf(buf, sizeof(buf), "\033[%u;%uH", p->yoff + p->cy + 1,
-                      p->xoff + p->cx + 1);
-  write(STDOUT_FILENO, buf, clen);
-
-  // 显示光标
-  write(STDOUT_FILENO, CURSOR_SHOW, 6);
+  // 历史模式下隐藏光标，正常模式下显示
+  if (g->scroll_offset > 0) {
+    write(STDOUT_FILENO, CURSOR_HIDE, 6);
+  } else {
+    // 光标移动到 pane 内的正确位置 （vt解析）
+    int clen = snprintf(buf, sizeof(buf), "\033[%u;%uH", p->yoff + p->cy + 1,
+                        p->xoff + p->cx + 1);
+    write(STDOUT_FILENO, buf, clen);
+    // 显示光标
+    write(STDOUT_FILENO, CURSOR_SHOW, 6);
+  }
 }
 void render_status_bar(struct client *c) {
   char buf[256];
@@ -124,9 +193,18 @@ void render_status_bar(struct client *c) {
   len = snprintf(buf, sizeof(buf), " %s ", wname);
   write(STDOUT_FILENO, buf, len);
 
+  if (c->pane->grid->scroll_offset) {
+    len = snprintf(buf, sizeof(buf), "[history]");
+    write(STDOUT_FILENO, buf, len);
+  }
   // 用空格填满整行
   for (unsigned int i = strlen(buf); i < cols; i++) {
-    if (i >= cols - 17) {
+    if (i >= cols - 17 && !c->pane->grid->scroll_offset) {
+      int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
+      write(STDOUT_FILENO, buf, len);
+      write(STDOUT_FILENO, " ", 1);
+      break;
+    } else if (i >= cols - 29 && c->pane->grid->scroll_offset) {
       int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
       write(STDOUT_FILENO, buf, len);
       write(STDOUT_FILENO, " ", 1);

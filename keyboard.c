@@ -1,5 +1,6 @@
 #include "client.h"
 #include "log.h"
+#include "render.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,12 +30,26 @@ void next_pane(struct client *c) {
   }
   c->pane = next;
 }
+void scroll_up(struct client *c) {
+  if (c->pane && c->pane->grid) {
+    grid_scroll_up(c->pane->grid, c->pane->sy); // 滚动一屏
+    render_pane(c->pane);                       // 刷新显示
+    render_status_bar(c);
+  }
+}
+void scroll_down(struct client *c) {
+  if (c->pane && c->pane->grid) {
+    grid_scroll_down(c->pane->grid, c->pane->sy); // 滚动一屏
+    render_pane(c->pane);                         // 刷新显示
+    render_status_bar(c);
+  }
+}
 
 static struct keybind keybinds[MAX_KEYBINDS];
 struct action_map actions[] = {
-    {"detach_session", detach_session},
-    {"new_pane", new_pane},
-    {"next_pane", next_pane},
+    {"detach_session", detach_session}, {"new_pane", new_pane},
+    {"next_pane", next_pane},           {"scroll_up", scroll_up},
+    {"scroll_down", scroll_down},
 };
 int keybind_count = 0;
 
@@ -58,6 +73,8 @@ void keybind_init() {
   keybinds[keybind_count++] = (struct keybind){'d', KEY_PREFIX, detach_session};
   keybinds[keybind_count++] = (struct keybind){'%', KEY_PREFIX, new_pane};
   keybinds[keybind_count++] = (struct keybind){'o', KEY_PREFIX, next_pane};
+  keybinds[keybind_count++] = (struct keybind){'[', KEY_PREFIX, scroll_up};
+  keybinds[keybind_count++] = (struct keybind){']', KEY_PREFIX, scroll_down};
 
   // tmp/mini-tmux-1000/default -> /tmp/mini-tmux-1000/
   char dirpath[512];

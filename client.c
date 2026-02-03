@@ -240,6 +240,7 @@ void act_stdin_read(struct client *c, client_event ev) {
     dispatch_event(c, EV_EOF_STDIN);
     return;
   }
+
   static int ctrl_b_pressed = 0;
 
   for (ssize_t i = 0; i < n; i++) {
@@ -256,6 +257,15 @@ void act_stdin_read(struct client *c, client_event ev) {
       handle_key(c, table, buff[i]);
       ctrl_b_pressed = 0;
     } else {
+      // 如果正在查看历史，非 Ctrl+B 按键退出历史模式
+      if (c->pane->grid->scroll_offset > 0) {
+        c->pane->grid->scroll_offset = 0;
+        render_pane(c->pane);
+        // 如果是 Esc 或 q，不发送到 shell
+        if (buff[i] == 0x1b || buff[i] == 'q') {
+          continue;
+        }
+      }
       write(c->pane->master_fd, &buff[i], 1);
     }
   }
@@ -650,6 +660,7 @@ int client_main(struct client *c) {
   render_status_bar(c);
   struct window_pane *p;
   list_for_each_entry(p, &c->pane->window->panes, link) {
+
     render_pane(p);
     if (p->link.next != &c->pane->window->panes) {
       render_pane_borders(p);

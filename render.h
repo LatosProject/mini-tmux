@@ -22,6 +22,11 @@ struct grid {
   struct cell *cells; // cells[y * width + x]
   unsigned int width;
   unsigned int height;
+
+  struct cell *history_cells;
+  unsigned int history_size;
+  unsigned int history_count;
+  unsigned int scroll_offset;
 };
 
 struct screen {
@@ -42,5 +47,13 @@ void render_screen(struct session *s);
 void render_pane(struct window_pane *p);
 void render_status_bar(struct client *c);
 void render_pane_borders(struct window_pane *w);
+
+// 历史管理函数
+void grid_init_history(struct grid *g, unsigned int max_lines);
+void grid_free_history(struct grid *g);
+void grid_push_line_to_history(struct grid *g, unsigned int line);
+void grid_scroll_up(struct grid *g, unsigned int lines);
+void grid_scroll_down(struct grid *g, unsigned int lines);
+struct cell *grid_get_display_line(struct grid *g, unsigned int y);
 
 #endif /* RENDER_H */

@@ -1,7 +1,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define MINI_TMUX_VERSION "0.3.2"
+#define MINI_TMUX_VERSION "0.3.3"
 #define MINI_TMUX_VERSION_STRING "mini-tmux v" MINI_TMUX_VERSION
 
 #endif /* VERSION_H */
