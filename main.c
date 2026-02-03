@@ -2,6 +2,7 @@
 #include "client.h"
 #include "log.h"
 #include "spawn.h"
+#include "version.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -12,7 +13,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
 struct client client;
 char *socket_path;
 int detached_session_id = -1;
@@ -21,7 +21,7 @@ int kill_session_id = -1;
 
 static void print_help(const char *prog) {
   printf("mini-tmux - a minimal terminal multiplexer\n\n");
-  printf("        Version: 0.3.3 By Latos\n\n");
+  printf("        Version: %s By Latos\n\n", MINI_TMUX_VERSION);
   printf("Usage: %s [options]\n\n", prog);
   printf("Options:\n");
   printf("  -l         List all sessions\n");
