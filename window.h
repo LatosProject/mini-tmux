@@ -45,8 +45,10 @@ struct window_pane {
 };
 
 struct window *window_create(const char *name);
-struct window_pane *pane_create(struct window *w, unsigned int sx, unsigned int sy,
-                                unsigned int xoff, unsigned int yoff);
+struct window_pane *pane_create(struct window *w, unsigned int sx,
+                                unsigned int sy, unsigned int xoff,
+                                unsigned int yoff);
+void window_destroy(struct window *w);
 void pane_destroy(struct window_pane *p);
 void pane_resize(struct window_pane *p, unsigned int sx, unsigned int sy);
 void pane_set_master_fd(struct window_pane *p, int fd);

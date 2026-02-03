@@ -6,7 +6,8 @@
 #include <unistd.h>
 
 // vterm 屏幕滚动回调 - 保存滚出屏幕的行到历史
-static int screen_sb_pushline(int cols, const VTermScreenCell *cells, void *user) {
+static int screen_sb_pushline(int cols, const VTermScreenCell *cells,
+                              void *user) {
   struct window_pane *p = user;
   if (!p || !p->grid)
     return 0;
@@ -17,7 +18,7 @@ static int screen_sb_pushline(int cols, const VTermScreenCell *cells, void *user
 }
 
 static VTermScreenCallbacks screen_callbacks = {
-  .sb_pushline = screen_sb_pushline,
+    .sb_pushline = screen_sb_pushline,
 };
 
 // vterm 输出回调 - 将终端响应发送回 PTY
@@ -78,6 +79,14 @@ struct window *window_create(const char *name) {
 
   return w;
 }
+
+void window_destroy(struct window *w) {
+  if (!w)
+    return;
+  free(w->name);
+  free(w);
+}
+
 struct window_pane *pane_create(struct window *w, unsigned int sx,
                                 unsigned int sy, unsigned int xoff,
                                 unsigned int yoff) {
@@ -93,11 +102,15 @@ struct window_pane *pane_create(struct window *w, unsigned int sx,
   p->window = w;
 
   p->grid = calloc(1, sizeof(*p->grid));
+  if (!p->grid) {
+    free(p);
+    return NULL;
+  }
   if (p->grid) {
     p->grid->width = sx;
     p->grid->height = sy;
     p->grid->cells = calloc(sx * sy, sizeof(struct cell));
-    grid_init_history(p->grid, 1000);  // 初始化历史缓冲区
+    grid_init_history(p->grid, 1000); // 初始化历史缓冲区
   }
 
   // 初始化 libvterm
@@ -108,8 +121,8 @@ struct window_pane *pane_create(struct window *w, unsigned int sx,
         p->vt); // 初始化screen 屏幕单元格内容（字符+颜色+属性）
     vterm_screen_enable_altscreen(p->vts,
                                   1); // 启用备用屏幕（维护两个屏幕缓冲区）
-    vterm_screen_set_callbacks(p->vts, &screen_callbacks, p);  // 设置滚动回调
-    vterm_screen_reset(p->vts, 1);    // 初始化内存
+    vterm_screen_set_callbacks(p->vts, &screen_callbacks, p); // 设置滚动回调
+    vterm_screen_reset(p->vts, 1);                            // 初始化内存
   }
 
   list_add_tail(&p->link, &w->panes);
@@ -122,7 +135,7 @@ void pane_destroy(struct window_pane *p) {
   if (p->vt)
     vterm_free(p->vt);
   if (p->grid) {
-    grid_free_history(p->grid);  // 释放历史
+    grid_free_history(p->grid); // 释放历史
     free(p->grid->cells);
     free(p->grid);
   }

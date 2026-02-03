@@ -270,6 +270,7 @@ int server_receive(int fd) {
     list_for_each_entry(sess, &session_list, link) {
       log_info("session id=%d, pid=%d", sess->id, sess->slave_pid);
     }
+    free(buf);
     return -1;
     break;
   case MSG_DETACH:
