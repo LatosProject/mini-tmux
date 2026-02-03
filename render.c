@@ -26,8 +26,11 @@ void grid_scroll_down(struct grid *g, unsigned int lines) {
 }
 // 向上滚动（查看历史）
 void grid_scroll_up(struct grid *g, unsigned int lines) {
-  if (g->scroll_offset + lines > g->history_count)
-    g->scroll_offset = g->history_count;
+  // 可滚动的最大行数是 min(history_count, history_size)
+  unsigned int max_scroll = (g->history_count < g->history_size)
+                            ? g->history_count : g->history_size;
+  if (g->scroll_offset + lines > max_scroll)
+    g->scroll_offset = max_scroll;
   else
     g->scroll_offset += lines;
 }
@@ -49,8 +52,7 @@ void grid_push_line_to_history(struct grid *g, unsigned int line) {
   // 复制该行到历史
   memcpy(&g->history_cells[dst_line * g->width], &g->cells[line * g->width],
          g->width * sizeof(struct cell));
-  if (g->history_count < g->history_size)
-    g->history_count++;
+  g->history_count++;  // 始终递增，用于环形缓冲区索引
 }
 
 struct cell *grid_get_display_line(struct grid *g, unsigned int y) {
@@ -59,15 +61,30 @@ struct cell *grid_get_display_line(struct grid *g, unsigned int y) {
   }
   if (!g->history_count || g->history_size == 0)
     return NULL;
-  int history_line = (int)g->history_count - (int)g->scroll_offset + (int)y;
+
+  // 可用的历史行数
+  unsigned int available = (g->history_count < g->history_size)
+                           ? g->history_count : g->history_size;
+
+  int history_line = (int)available - (int)g->scroll_offset + (int)y;
   if (history_line < 0)
-    return NULL;                               // 滚动太远，没有那么多历史
-  if (history_line >= (int)g->history_count) { // 非历史记录部分
-    int screen_y = history_line - g->history_count;
+    return NULL;                           // 滚动太远，没有那么多历史
+  if (history_line >= (int)available) {    // 非历史记录部分
+    int screen_y = history_line - available;
     return &g->cells[screen_y * g->width];
   }
-  unsigned int actual = history_line % g->history_size; // 确保不会越界
-  return &g->history_cells[actual * g->width];          // 历史记录部分
+
+  // 环形缓冲区读取
+  unsigned int actual;
+  if (g->history_count <= g->history_size) {
+    // 历史未满，直接索引
+    actual = history_line;
+  } else {
+    // 历史已满，最旧的行在 (history_count % history_size)
+    unsigned int oldest = g->history_count % g->history_size;
+    actual = (oldest + history_line) % g->history_size;
+  }
+  return &g->history_cells[actual * g->width];
 }
 
 void render_init(struct screen *s) {
@@ -111,12 +128,15 @@ void render_pane(struct window_pane *p) {
     int len =
         snprintf(buf, sizeof(buf), "\033[%u;%uH", p->yoff + y + 1, p->xoff + 1);
     write(STDOUT_FILENO, buf, len);
-
+    struct cell *line = grid_get_display_line(g, y);
+    if (!line) {
+      for (unsigned int x = 0; x < p->sx; x++) {
+        write(STDOUT_FILENO, " ", 1);
+      }
+      continue;
+    }
     for (unsigned int x = 0; x < p->sx;) {
       // struct cell *c = &g->cells[y * g->width + x];
-      struct cell *line = grid_get_display_line(g, y);
-      if (!line)
-        continue;
       struct cell *c = &line[x];
 
       // 检查是否需要更新颜色/属性

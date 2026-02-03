@@ -533,7 +533,7 @@ int client_main(struct client *c) {
   extern int detached_session_id;
   extern int list_sessions;
   extern int kill_session_id;
-
+  struct window *w = NULL;
   // 列出所有 session
   if (list_sessions) {
     send_server(MSG_LIST_SESSIONS, server_fd, NULL, 0);
@@ -588,7 +588,7 @@ int client_main(struct client *c) {
     log_info("attaching to session with %d panes", pane_count);
 
     // 创建 window
-    struct window *w = window_create("Attached Window");
+    w = window_create("Attached Window");
     c->ws.ws_row -= 1;
 
     // 计算每个 pane 的宽度
@@ -682,5 +682,7 @@ int client_main(struct client *c) {
   send_server(MSG_EXITED, server_fd, buf, strlen(buf) + 1);
   log_info("client exiting");
   log_close();
+  window_destroy(w);
+  pane_destroy(c->pane);
   return 0;
 }
