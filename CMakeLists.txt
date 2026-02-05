@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(mini-tmux VERSION 0.4.0)
+project(mini-tmux VERSION 0.4.1)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_definitions(_DEFAULT_SOURCE)
 

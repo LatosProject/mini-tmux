@@ -277,7 +277,7 @@ void act_detach(struct client *c, client_event ev) {
   struct window_pane *p;
   list_for_each_entry(p, &c->pane->window->panes, link) {
     void *buf;
-    size_t n = grid_serialize(p->grid, p->id, &buf);
+    size_t n = grid_serialize(p->grid, p->id, p->cx, p->cy, &buf);
     if (n > 0) {
       send_server(MSG_GRID_SAVE, server_fd, buf, n);
       free(buf);
@@ -663,9 +663,13 @@ int client_main(struct client *c) {
             log_info("client attach: checking wp->id=%u vs pane_id=%u", wp->id,
                      pane_id);
             if (wp->id == pane_id) {
-              int ret = grid_deserialize(wp->grid, &pane_id, data, gh.len);
-              if (ret == 0)
+              unsigned int cx, cy;
+              int ret = grid_deserialize(wp->grid, &pane_id, &cx, &cy, data, gh.len);
+              if (ret == 0) {
+                wp->cx = cx;
+                wp->cy = cy;
                 sync_vterm_from_grid(wp);
+              }
               log_info("client attach: grid_deserialize returned %d", ret);
               found = 1;
               free(data);

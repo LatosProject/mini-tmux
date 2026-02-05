@@ -264,13 +264,14 @@ void render_pane_borders(struct window_pane *p) {
   write(STDOUT_FILENO, CURSOR_SHOW, 6);
 }
 
-size_t grid_serialize(struct grid *g, unsigned int pane_id, void **out_buf) {
+size_t grid_serialize(struct grid *g, unsigned int pane_id,
+                      unsigned int cx, unsigned int cy, void **out_buf) {
   unsigned int stored_history =
       (g->history_count < g->history_size) ? g->history_count : g->history_size;
 
   size_t cells_size = g->width * g->height * sizeof(*g->cells);
   size_t hist_cells_size = stored_history * g->width * sizeof(*g->cells);
-  size_t total = 6 * sizeof(unsigned int) + cells_size + hist_cells_size;
+  size_t total = 8 * sizeof(unsigned int) + cells_size + hist_cells_size;
 
   char *buf = malloc(total);
   if (!buf)
@@ -278,6 +279,10 @@ size_t grid_serialize(struct grid *g, unsigned int pane_id, void **out_buf) {
   char *p = buf;
   memcpy(p, &pane_id, sizeof(pane_id));
   p += sizeof(pane_id);
+  memcpy(p, &cx, sizeof(cx));
+  p += sizeof(cx);
+  memcpy(p, &cy, sizeof(cy));
+  p += sizeof(cy);
   memcpy(p, &g->width, sizeof(g->width));
   p += sizeof(g->width);
   memcpy(p, &g->height, sizeof(g->height));
@@ -307,15 +312,20 @@ size_t grid_serialize(struct grid *g, unsigned int pane_id, void **out_buf) {
   return total;
 }
 
-int grid_deserialize(struct grid *g, unsigned int *pane_id, const void *buf,
-                     size_t len) {
+int grid_deserialize(struct grid *g, unsigned int *pane_id,
+                     unsigned int *cx, unsigned int *cy,
+                     const void *buf, size_t len) {
   const char *p = buf;
 
-  if (len < 6 * sizeof(unsigned int))
+  if (len < 8 * sizeof(unsigned int))
     return -1;
 
   memcpy(pane_id, p, sizeof(*pane_id));
   p += sizeof(*pane_id);
+  memcpy(cx, p, sizeof(*cx));
+  p += sizeof(*cx);
+  memcpy(cy, p, sizeof(*cy));
+  p += sizeof(*cy);
   memcpy(&g->width, p, sizeof(g->width));
   p += sizeof(g->width);
   memcpy(&g->height, p, sizeof(g->height));
@@ -333,7 +343,7 @@ int grid_deserialize(struct grid *g, unsigned int *pane_id, const void *buf,
       (g->history_count < g->history_size) ? g->history_count : g->history_size;
   size_t hist_size = stored * g->width * sizeof(struct cell);
 
-  if (len < 6 * sizeof(unsigned int) + cells_size + hist_size)
+  if (len < 8 * sizeof(unsigned int) + cells_size + hist_size)
     return -1;
 
   // 释放旧数据（pane_create 时已分配）

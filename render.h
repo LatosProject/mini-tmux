@@ -55,8 +55,10 @@ void grid_push_line_to_history(struct grid *g, unsigned int line);
 void grid_scroll_up(struct grid *g, unsigned int lines);
 void grid_scroll_down(struct grid *g, unsigned int lines);
 struct cell *grid_get_display_line(struct grid *g, unsigned int y);
-size_t grid_serialize(struct grid *g, unsigned int pane_id, void **out_buf);
-int grid_deserialize(struct grid *g, unsigned int *pane_id, const void *buf,
-                     size_t len);
+size_t grid_serialize(struct grid *g, unsigned int pane_id,
+                      unsigned int cx, unsigned int cy, void **out_buf);
+int grid_deserialize(struct grid *g, unsigned int *pane_id,
+                     unsigned int *cx, unsigned int *cy,
+                     const void *buf, size_t len);
 
 #endif /* RENDER_H */

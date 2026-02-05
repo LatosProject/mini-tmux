@@ -46,8 +46,6 @@ void sync_vterm_from_grid(struct window_pane *p) {
   vterm_input_write(p->vt, "\033[H\033[2J\033[0m", 11);
 
   uint8_t last_fg = 0, last_bg = 0, last_attr = 0, last_flags = 0x03;
-  unsigned int last_non_empty_y = 0;
-  unsigned int last_non_empty_x = 0;
 
   for (unsigned int y = 0; y < g->height; y++) {
     len = snprintf(seq, sizeof(seq), "\033[%u;1H", y + 1);
@@ -84,9 +82,6 @@ void sync_vterm_from_grid(struct window_pane *p) {
 
       if (c->ch[0]) {
         vterm_input_write(p->vt, c->ch, strlen(c->ch));
-        // 记录最后一个非空字符的位置
-        last_non_empty_y = y;
-        last_non_empty_x = x + ((c->width > 0) ? c->width : 1);
         x += (c->width > 0) ? c->width : 1;
       } else {
         vterm_input_write(p->vt, " ", 1);
@@ -95,15 +90,9 @@ void sync_vterm_from_grid(struct window_pane *p) {
     }
   }
 
-  // 把光标移到最后一个非空行的末尾（而不是 p->cy, p->cx）
-  // 这样 shell 发送 \033[J 时不会清除太多内容
-  len = snprintf(seq, sizeof(seq), "\033[%u;%uH", last_non_empty_y + 1,
-                 last_non_empty_x + 1);
+  // 恢复保存的光标位置
+  len = snprintf(seq, sizeof(seq), "\033[%u;%uH", p->cy + 1, p->cx + 1);
   vterm_input_write(p->vt, seq, len);
-
-  // 同时更新 pane 的光标位置
-  p->cy = last_non_empty_y;
-  p->cx = last_non_empty_x;
 }
 
 // 从 libvterm 同步屏幕内容到 grid
