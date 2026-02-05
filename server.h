@@ -53,6 +53,9 @@ struct session {
 
   struct list_head link; // 链表节点，用于连接到全局会话列表
   struct window *active_window;
+
+  void *grid_data[MAX_PANES];
+  ssize_t grid_data_len[MAX_PANES];
 };
 
 #endif /* SERVER_H */

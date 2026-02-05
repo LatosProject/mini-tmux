@@ -2,10 +2,10 @@
 #define WINDOW_H
 
 #include "list.h"
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <termios.h>
 #include "vterm.h"
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <termios.h>
 
 struct grid; // 前向声明
 
@@ -16,6 +16,7 @@ struct window {
   char *name;
   unsigned int active_point;
   int flags;
+  unsigned int next_pane_id; // 下一个 pane 的 ID
 };
 
 struct window_pane {

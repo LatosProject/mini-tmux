@@ -4,6 +4,7 @@
 #include "version.h"
 #include "window.h"
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -210,23 +211,25 @@ void render_status_bar(struct client *c) {
 
   // 写状态内容
   const char *wname = c->pane->window->name ? c->pane->window->name : "unnamed";
-  len = snprintf(buf, sizeof(buf), " %s ", wname);
-  write(STDOUT_FILENO, buf, len);
+  int wstr_len = snprintf(buf, sizeof(buf), " %s ", wname);
+  write(STDOUT_FILENO, buf, wstr_len);
 
   if (c->pane->grid->scroll_offset) {
-    len = snprintf(buf, sizeof(buf), "[history]");
-    write(STDOUT_FILENO, buf, len);
+    int hstr_len = snprintf(buf, sizeof(buf), "[history]");
+    write(STDOUT_FILENO, buf, hstr_len);
   }
+
   // 用空格填满整行
   for (unsigned int i = strlen(buf); i < cols; i++) {
-    if (i >= cols - 17 && !c->pane->grid->scroll_offset) {
-      int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
-      write(STDOUT_FILENO, buf, len);
+    int vstr_len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
+
+    if (i >= cols - 1 - vstr_len && !c->pane->grid->scroll_offset) {
+      write(STDOUT_FILENO, buf, vstr_len);
       write(STDOUT_FILENO, " ", 1);
       break;
-    } else if (i >= cols - 29 && c->pane->grid->scroll_offset) {
-      int len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
-      write(STDOUT_FILENO, buf, len);
+    } else if (i >= cols - 1 - wstr_len - vstr_len &&
+               c->pane->grid->scroll_offset) {
+      write(STDOUT_FILENO, buf, vstr_len);
       write(STDOUT_FILENO, " ", 1);
       break;
     }
@@ -259,4 +262,103 @@ void render_pane_borders(struct window_pane *p) {
                       p->xoff + p->cx + 1);
   write(STDOUT_FILENO, buf, clen);
   write(STDOUT_FILENO, CURSOR_SHOW, 6);
+}
+
+size_t grid_serialize(struct grid *g, unsigned int pane_id, void **out_buf) {
+  unsigned int stored_history =
+      (g->history_count < g->history_size) ? g->history_count : g->history_size;
+
+  size_t cells_size = g->width * g->height * sizeof(*g->cells);
+  size_t hist_cells_size = stored_history * g->width * sizeof(*g->cells);
+  size_t total = 6 * sizeof(unsigned int) + cells_size + hist_cells_size;
+
+  char *buf = malloc(total);
+  if (!buf)
+    return 0;
+  char *p = buf;
+  memcpy(p, &pane_id, sizeof(pane_id));
+  p += sizeof(pane_id);
+  memcpy(p, &g->width, sizeof(g->width));
+  p += sizeof(g->width);
+  memcpy(p, &g->height, sizeof(g->height));
+  p += sizeof(g->height);
+  memcpy(p, &g->history_size, sizeof(g->history_size));
+  p += sizeof(g->history_size);
+  memcpy(p, &g->history_count, sizeof(g->history_count));
+  p += sizeof(g->history_count);
+  memcpy(p, &g->scroll_offset, sizeof(g->scroll_offset));
+  p += sizeof(g->scroll_offset);
+  memcpy(p, g->cells, cells_size);
+  p += cells_size;
+
+  if (hist_cells_size > 0 && g->history_cells) {
+    if (g->history_count <= g->history_size) {
+      memcpy(p, g->history_cells, hist_cells_size);
+    } else {
+      unsigned int oldest = g->history_count % g->history_size;
+      size_t old_one =
+          (g->history_size - oldest) * g->width * sizeof(*g->cells);
+      size_t new_one = oldest * g->width * sizeof(*g->cells);
+      memcpy(p, &g->history_cells[oldest * g->width], old_one);
+      memcpy(p + old_one, g->history_cells, new_one);
+    }
+  }
+  *out_buf = buf;
+  return total;
+}
+
+int grid_deserialize(struct grid *g, unsigned int *pane_id, const void *buf,
+                     size_t len) {
+  const char *p = buf;
+
+  if (len < 6 * sizeof(unsigned int))
+    return -1;
+
+  memcpy(pane_id, p, sizeof(*pane_id));
+  p += sizeof(*pane_id);
+  memcpy(&g->width, p, sizeof(g->width));
+  p += sizeof(g->width);
+  memcpy(&g->height, p, sizeof(g->height));
+  p += sizeof(g->height);
+  memcpy(&g->history_size, p, sizeof(g->history_size));
+  p += sizeof(g->history_size);
+  memcpy(&g->history_count, p, sizeof(g->history_count));
+  p += sizeof(g->history_count);
+  memcpy(&g->scroll_offset, p, sizeof(g->scroll_offset));
+  p += sizeof(g->scroll_offset);
+
+  // cells
+  size_t cells_size = g->width * g->height * sizeof(struct cell);
+  unsigned int stored =
+      (g->history_count < g->history_size) ? g->history_count : g->history_size;
+  size_t hist_size = stored * g->width * sizeof(struct cell);
+
+  if (len < 6 * sizeof(unsigned int) + cells_size + hist_size)
+    return -1;
+
+  // 释放旧数据（pane_create 时已分配）
+  free(g->cells);
+  free(g->history_cells);
+
+  g->cells = malloc(cells_size);
+  if (!g->cells)
+    return -1;
+  memcpy(g->cells, p, cells_size);
+  p += cells_size;
+
+  // history
+  if (g->history_size > 0) {
+    g->history_cells = calloc(g->history_size * g->width, sizeof(struct cell));
+    if (!g->history_cells)
+      return -1;
+    if (stored > 0) {
+      memcpy(g->history_cells, p, hist_size);
+    }
+    // 重置 history_count，因为序列化时已经展开成顺序排列了
+    g->history_count = stored;
+  } else {
+    g->history_cells = NULL;
+  }
+
+  return 0;
 }

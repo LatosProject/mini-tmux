@@ -1,6 +1,7 @@
 #include "render.h"
 #include "window.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 // Unicode codepoint 转 UTF-8
@@ -30,6 +31,79 @@ static int unicode_to_utf8(uint32_t cp, char *buf) {
   }
   buf[0] = 0;
   return 0;
+}
+
+// 从 grid 同步屏幕内容到 VTerm
+void sync_vterm_from_grid(struct window_pane *p) {
+  if (!p->vt || !p->grid)
+    return;
+
+  struct grid *g = p->grid;
+  char seq[64];
+  int len;
+
+  // 清屏并重置状态
+  vterm_input_write(p->vt, "\033[H\033[2J\033[0m", 11);
+
+  uint8_t last_fg = 0, last_bg = 0, last_attr = 0, last_flags = 0x03;
+  unsigned int last_non_empty_y = 0;
+  unsigned int last_non_empty_x = 0;
+
+  for (unsigned int y = 0; y < g->height; y++) {
+    len = snprintf(seq, sizeof(seq), "\033[%u;1H", y + 1);
+    vterm_input_write(p->vt, seq, len);
+
+    for (unsigned int x = 0; x < g->width;) {
+      struct cell *c = &g->cells[y * g->width + x];
+
+      // 只在属性变化时更新
+      if (c->attr != last_attr || c->fg != last_fg || c->bg != last_bg ||
+          c->flags != last_flags) {
+        vterm_input_write(p->vt, "\033[0m", 4);
+        if (c->attr & 0x01)
+          vterm_input_write(p->vt, "\033[1m", 4);
+        if (c->attr & 0x02)
+          vterm_input_write(p->vt, "\033[4m", 4);
+        if (c->attr & 0x04)
+          vterm_input_write(p->vt, "\033[3m", 4);
+        if (c->attr & 0x08)
+          vterm_input_write(p->vt, "\033[7m", 4);
+        if (!(c->flags & 0x01)) {
+          len = snprintf(seq, sizeof(seq), "\033[38;5;%um", c->fg);
+          vterm_input_write(p->vt, seq, len);
+        }
+        if (!(c->flags & 0x02)) {
+          len = snprintf(seq, sizeof(seq), "\033[48;5;%um", c->bg);
+          vterm_input_write(p->vt, seq, len);
+        }
+        last_attr = c->attr;
+        last_fg = c->fg;
+        last_bg = c->bg;
+        last_flags = c->flags;
+      }
+
+      if (c->ch[0]) {
+        vterm_input_write(p->vt, c->ch, strlen(c->ch));
+        // 记录最后一个非空字符的位置
+        last_non_empty_y = y;
+        last_non_empty_x = x + ((c->width > 0) ? c->width : 1);
+        x += (c->width > 0) ? c->width : 1;
+      } else {
+        vterm_input_write(p->vt, " ", 1);
+        x++;
+      }
+    }
+  }
+
+  // 把光标移到最后一个非空行的末尾（而不是 p->cy, p->cx）
+  // 这样 shell 发送 \033[J 时不会清除太多内容
+  len = snprintf(seq, sizeof(seq), "\033[%u;%uH", last_non_empty_y + 1,
+                 last_non_empty_x + 1);
+  vterm_input_write(p->vt, seq, len);
+
+  // 同时更新 pane 的光标位置
+  p->cy = last_non_empty_y;
+  p->cx = last_non_empty_x;
 }
 
 // 从 libvterm 同步屏幕内容到 grid

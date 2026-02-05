@@ -49,10 +49,11 @@ enum msgtype {
   MSG_WRITE_READY,
   MSG_WRITE_CLOSE,
   MSG_READ_CANCEL,
+
+  MSG_GRID_SAVE,
 };
 
-
 struct msg_header {
-    enum msgtype type;
-    size_t len;
+  enum msgtype type;
+  size_t len;
 };

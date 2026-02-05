@@ -124,6 +124,7 @@ struct window *window_create(const char *name) {
 
   list_init(&w->panes);
   w->name = name ? strdup(name) : NULL;
+  w->next_pane_id = 0;
 
   return w;
 }
@@ -148,6 +149,7 @@ struct window_pane *pane_create(struct window *w, unsigned int sx,
   p->cx = 0;
   p->cy = 0;
   p->window = w;
+  p->id = w->next_pane_id++;
 
   p->grid = calloc(1, sizeof(*p->grid));
   if (!p->grid) {

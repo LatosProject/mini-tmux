@@ -1,5 +1,6 @@
 #include "list.h"
 #include "mini_tmux-protocol.h"
+#include "render.h"
 #include "window.h"
 #define _GNU_SOURCE
 #include "client.h"
@@ -272,6 +273,16 @@ void act_stdin_read(struct client *c, client_event ev) {
 }
 
 void act_detach(struct client *c, client_event ev) {
+  void *buf;
+  struct window_pane *p;
+  list_for_each_entry(p, &c->pane->window->panes, link) {
+    void *buf;
+    size_t n = grid_serialize(p->grid, p->id, &buf);
+    if (n > 0) {
+      send_server(MSG_GRID_SAVE, server_fd, buf, n);
+      free(buf);
+    }
+  }
   send_server(MSG_DETACH, server_fd, NULL, 0);
   c->child_exited = 1;
   // 切换回主屏幕缓冲区
@@ -616,7 +627,58 @@ int client_main(struct client *c) {
       }
       x_offset += pane_width + 1;
     }
+    // 读取 grid 数量
+    int grid_count = 0;
+    read(server_fd, &grid_count, sizeof(grid_count));
+    log_info("client attach: received grid_count=%d", grid_count);
 
+    for (int i = 0; i < grid_count; i++) {
+      struct msg_header gh;
+      ssize_t hdr_read = read(server_fd, &gh, sizeof(gh));
+      log_info("client attach: read header, got %zd bytes, type=%d, len=%zu",
+               hdr_read, gh.type, gh.len);
+      if (hdr_read == sizeof(gh) && gh.type == MSG_GRID_SAVE) {
+        void *data = malloc(gh.len);
+        // 循环读取，确保读取完整数据
+        size_t total_read = 0;
+        while (total_read < gh.len) {
+          ssize_t n =
+              read(server_fd, (char *)data + total_read, gh.len - total_read);
+          if (n <= 0) {
+            log_error("client attach: read failed at %zu/%zu bytes", total_read,
+                      gh.len);
+            break;
+          }
+          total_read += n;
+        }
+        log_info("client attach: read data, got %zu bytes total", total_read);
+        if (total_read == gh.len) {
+          unsigned int pane_id;
+          memcpy(&pane_id, data, sizeof(pane_id));
+          log_info("client attach: grid pane_id=%u, len=%zu", pane_id, gh.len);
+
+          struct window_pane *wp;
+          int found = 0;
+          list_for_each_entry(wp, &w->panes, link) {
+            log_info("client attach: checking wp->id=%u vs pane_id=%u", wp->id,
+                     pane_id);
+            if (wp->id == pane_id) {
+              int ret = grid_deserialize(wp->grid, &pane_id, data, gh.len);
+              if (ret == 0)
+                sync_vterm_from_grid(wp);
+              log_info("client attach: grid_deserialize returned %d", ret);
+              found = 1;
+              free(data);
+              break;
+            }
+          }
+          if (!found) {
+            log_warn("client attach: no pane found for pane_id=%u", pane_id);
+            free(data);
+          }
+        }
+      }
+    }
   } else {
     // 不允许嵌套运行
     if (client_check_nested()) {

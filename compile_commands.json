@@ -1,110 +1,110 @@
 [
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/main.c.o -c /Users/latos/Desktop/Code/mini-tmux/main.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/main.c.o -c /Users/latos/Desktop/Code/mini-tmux/main.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/main.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/main.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/main.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/client.c.o -c /Users/latos/Desktop/Code/mini-tmux/client.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/client.c.o -c /Users/latos/Desktop/Code/mini-tmux/client.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/client.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/client.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/client.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/spawn.c.o -c /Users/latos/Desktop/Code/mini-tmux/spawn.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/spawn.c.o -c /Users/latos/Desktop/Code/mini-tmux/spawn.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/spawn.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/spawn.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/spawn.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/util.c.o -c /Users/latos/Desktop/Code/mini-tmux/util.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/util.c.o -c /Users/latos/Desktop/Code/mini-tmux/util.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/util.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/util.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/util.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/server.c.o -c /Users/latos/Desktop/Code/mini-tmux/server.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/server.c.o -c /Users/latos/Desktop/Code/mini-tmux/server.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/server.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/server.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/server.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/log.c.o -c /Users/latos/Desktop/Code/mini-tmux/log.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/log.c.o -c /Users/latos/Desktop/Code/mini-tmux/log.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/log.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/log.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/log.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/window.c.o -c /Users/latos/Desktop/Code/mini-tmux/window.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/window.c.o -c /Users/latos/Desktop/Code/mini-tmux/window.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/window.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/window.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/window.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/render.c.o -c /Users/latos/Desktop/Code/mini-tmux/render.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/render.c.o -c /Users/latos/Desktop/Code/mini-tmux/render.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/render.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/render.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/render.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/input.c.o -c /Users/latos/Desktop/Code/mini-tmux/input.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/input.c.o -c /Users/latos/Desktop/Code/mini-tmux/input.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/input.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/input.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/input.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/vterm.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/vterm.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/vterm.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/vterm.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/vterm.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/vterm.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/vterm.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/encoding.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/encoding.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/encoding.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/encoding.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/encoding.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/encoding.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/encoding.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/keyboard.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/keyboard.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/keyboard.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/keyboard.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/keyboard.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/keyboard.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/keyboard.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/mouse.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/mouse.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/mouse.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/mouse.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/mouse.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/mouse.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/mouse.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/parser.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/parser.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/parser.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/parser.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/parser.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/parser.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/parser.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/pen.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/pen.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/pen.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/pen.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/pen.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/pen.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/pen.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/screen.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/screen.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/screen.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/screen.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/screen.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/screen.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/screen.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/state.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/state.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/state.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/state.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/state.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/state.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/state.c.o"
 },
 {
   "directory": "/Users/latos/Desktop/Code/mini-tmux",
-  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/unicode.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/unicode.c",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -I/Users/latos/Desktop/Code/mini-tmux/vendor/vterm  -arch arm64 -o CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/unicode.c.o -c /Users/latos/Desktop/Code/mini-tmux/vendor/vterm/unicode.c",
   "file": "/Users/latos/Desktop/Code/mini-tmux/vendor/vterm/unicode.c",
-  "output": "CMakeFiles/mini-tmux-0.3.4-arm64.dir/vendor/vterm/unicode.c.o"
+  "output": "CMakeFiles/mini-tmux-0.4.0-arm64.dir/vendor/vterm/unicode.c.o"
 }
 ]

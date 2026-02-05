@@ -60,6 +60,12 @@ void session_init(struct session *s) {
   s->slave_pid = -1;
   s->child_exited = 0;
   s->detached = 0;
+  for (int i = 0; i < MAX_PANES; i++) {
+    s->master_fds[i] = -1;
+    s->pane_pids[i] = -1;
+    s->grid_data[i] = NULL;
+    s->grid_data_len[i] = 0;
+  }
   list_init(&s->link);
   tcgetattr(STDIN_FILENO, &(s->orig_termios));
   ioctl(STDIN_FILENO, TIOCGWINSZ, &(s->ws));
@@ -296,6 +302,30 @@ int server_receive(int fd) {
         for (int i = 0; i < target->pane_count; i++) {
           send_fd(fd, target->master_fds[i]);
         }
+        // 统计并发送 grid 数量
+        int grid_count = 0;
+        for (int i = 0; i < target->pane_count; i++) {
+          if (target->grid_data[i] && target->grid_data_len[i] > 0)
+            grid_count++;
+        }
+        log_info("attach: pane_count=%d, grid_count=%d", target->pane_count, grid_count);
+        for (int i = 0; i < target->pane_count; i++) {
+          log_info("attach: grid_data[%d]=%p, len=%zd", i, target->grid_data[i], target->grid_data_len[i]);
+        }
+        write(fd, &grid_count, sizeof(grid_count));
+        for (int i = 0; i < target->pane_count; i++) {
+          if (target->grid_data[i] && target->grid_data_len[i] > 0) {
+            struct msg_header gh = {MSG_GRID_SAVE, target->grid_data_len[i]};
+            log_info("attach: sending grid header type=%d, len=%zu", gh.type, gh.len);
+            ssize_t hdr_written = write(fd, &gh, sizeof(gh));
+            log_info("attach: header write returned %zd", hdr_written);
+            ssize_t data_written = write(fd, target->grid_data[i], target->grid_data_len[i]);
+            log_info("attach: data write returned %zd (expected %zd)", data_written, target->grid_data_len[i]);
+            free(target->grid_data[i]);
+            target->grid_data[i] = NULL;
+            target->grid_data_len[i] = 0;
+          }
+        }
         target->client_fd = fd;
         target->detached = 0;
       } else {
@@ -308,7 +338,23 @@ int server_receive(int fd) {
     }
     free(buf);
     return 1; // 返回 1，让 detach 处理代码来关闭 fd
-
+  case MSG_GRID_SAVE:
+    sess = find_session_by_client_fd(fd);
+    log_info("MSG_GRID_SAVE: sess=%p, fd=%d", (void*)sess, fd);
+    if (sess) {
+      unsigned int pane_id;
+      memcpy(&pane_id, buf, sizeof(pane_id));
+      log_info("MSG_GRID_SAVE: pane_id=%u, len=%zu", pane_id, hdr.len);
+      if (pane_id < MAX_PANES) {
+        free(sess->grid_data[pane_id]);
+        sess->grid_data[pane_id] = buf;
+        sess->grid_data_len[pane_id] = hdr.len;
+        buf = NULL;
+        log_info("MSG_GRID_SAVE: stored at grid_data[%u]", pane_id);
+      }
+    }
+    free(buf);
+    return 1;
   default:
     log_warn("unknown msgtype %d", hdr.type);
   }
