@@ -664,7 +664,8 @@ int client_main(struct client *c) {
                      pane_id);
             if (wp->id == pane_id) {
               unsigned int cx, cy;
-              int ret = grid_deserialize(wp->grid, &pane_id, &cx, &cy, data, gh.len);
+              int ret =
+                  grid_deserialize(wp->grid, &pane_id, &cx, &cy, data, gh.len);
               if (ret == 0) {
                 wp->cx = cx;
                 wp->cy = cy;
@@ -743,7 +744,7 @@ int client_main(struct client *c) {
   client_loop(c);
 
   char buf[100];
-  memset(buf, 0, sizeof(0));
+  memset(buf, 0, sizeof(buf));
   snprintf(buf, sizeof(buf), "%d", c->slave_pid);
   send_server(MSG_EXITED, server_fd, buf, strlen(buf) + 1);
   log_info("client exiting");
