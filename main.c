@@ -1,5 +1,6 @@
 #include "main.h"
 #include "client.h"
+#include "i18n.h"
 #include "log.h"
 #include "spawn.h"
 #include "version.h"
@@ -20,28 +21,30 @@ int list_sessions = 0;
 int kill_session_id = -1;
 
 static void print_help(const char *prog) {
-  printf("mini-tmux - a minimal terminal multiplexer\n\n");
-  printf("        Version: %s By Latos\n\n", MINI_TMUX_VERSION);
-  printf("Usage: %s [options]\n\n", prog);
-  printf("Options:\n");
-  printf("  -l         List all sessions\n");
-  printf("  -s <id>    Attach to detached session by id\n");
-  printf("  -k <id>    Kill session by id\n");
-  printf("  -h         Show this help message\n\n");
-  printf("Key bindings:\n");
-  printf("  Ctrl+B d   Detach from current session\n");
-  printf("  Ctrl+B %%   Split pane vertically\n");
-  printf("  Ctrl+B o   Switch to next pane\n");
-  printf("  Ctrl+B [   Scroll up (view history)\n");
-  printf("  Ctrl+B ]   Scroll down\n\n");
-  printf("Examples:\n");
-  printf("  %s           Start a new session\n", prog);
-  printf("  %s -l        List all sessions\n", prog);
-  printf("  %s -s 0      Attach to session 0\n", prog);
-  printf("  %s -k 0      Kill session 0\n", prog);
+  printf("%s", TR(MSG_HELP_TITLE));
+  printf(TR(MSG_HELP_VERSION), MINI_TMUX_VERSION);
+  printf(TR(MSG_HELP_USAGE), prog);
+  printf("%s", TR(MSG_HELP_OPTIONS));
+  printf("%s", TR(MSG_HELP_OPT_LIST));
+  printf("%s", TR(MSG_HELP_OPT_ATTACH));
+  printf("%s", TR(MSG_HELP_OPT_KILL));
+  printf("%s", TR(MSG_HELP_OPT_HELP));
+  printf("%s", TR(MSG_HELP_KEYBINDINGS));
+  printf("%s", TR(MSG_HELP_KEY_DETACH));
+  printf("%s", TR(MSG_HELP_KEY_SPLIT));
+  printf("%s", TR(MSG_HELP_KEY_NEXT));
+  printf("%s", TR(MSG_HELP_KEY_SCROLL_UP));
+  printf("%s", TR(MSG_HELP_KEY_SCROLL_DOWN));
+  printf("%s", TR(MSG_HELP_EXAMPLES));
+  printf(TR(MSG_HELP_EX_NEW), prog);
+  printf(TR(MSG_HELP_EX_LIST), prog);
+  printf(TR(MSG_HELP_EX_ATTACH), prog);
+  printf(TR(MSG_HELP_EX_KILL), prog);
 }
 
 int main(int argc, char *argv[]) {
+  i18n_init();
+
   if (argc == 2 &&
       (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
     print_help(argv[0]);
@@ -64,12 +67,12 @@ int main(int argc, char *argv[]) {
   char dir[MINI_TMUX_BUF_SMALL] = {0};
   snprintf(dir, sizeof(dir), "%smini-tmux-%d", MINI_TMUX_SOCK, uid);
   if (mkdir(dir, 0700) != 0 && errno != EEXIST) {
-    perror("mkdir failed");
+    perror(TR(MSG_ERR_MKDIR));
     return -1;
   }
   struct stat info;
   if (lstat(dir, &info) != 0 || !(info.st_mode & S_IFDIR)) {
-    perror("stat");
+    perror(TR(MSG_ERR_STAT));
     return -1;
   }
 

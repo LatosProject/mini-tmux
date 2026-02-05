@@ -1,4 +1,5 @@
 #include "server.h"
+#include "i18n.h"
 #include "main.h"
 #include "util.h"
 #include <fcntl.h>
@@ -15,7 +16,7 @@ pid_t spawn_child(struct session *s) {
 
   pid_t pid = fork();
   if (pid < 0) {
-    perror("Fork failed");
+    perror(TR(MSG_ERR_FORK));
     exit(1);
   } else if (pid == 0) {
     const char *shell = getshell();
@@ -26,7 +27,7 @@ pid_t spawn_child(struct session *s) {
 
     s->slave_fd = open(*&s->slave_name, O_RDWR);
     if (s->slave_fd < 0) {
-      perror("open slave pty failed");
+      perror(TR(MSG_ERR_OPEN_PTY));
       _exit(1);
     }
 
@@ -61,7 +62,7 @@ pid_t spawn_child(struct session *s) {
     }
 
     execve(args[0], args, environ);
-    perror("Execve failed");
+    perror(TR(MSG_ERR_EXEC));
     _exit(1); // Use _exit to avoid flushing stdio buffers again
   }
   return pid;

@@ -37,7 +37,7 @@ set(VTERM_SOURCES
     vendor/vterm/unicode.c
 )
 
-set(SOURCES main.c client.c spawn.c util.c server.c log.c window.c render.c input.c keyboard.c)
+set(SOURCES main.c client.c spawn.c util.c server.c log.c window.c render.c input.c keyboard.c i18n.c)
 
 # 设置输出文件名：mini-tmux-版本-架构[-debug]
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

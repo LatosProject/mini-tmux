@@ -1,5 +1,6 @@
 #include "render.h"
 #include "client.h"
+#include "i18n.h"
 #include "list.h"
 #include "main.h"
 #include "version.h"
@@ -214,21 +215,48 @@ void render_status_bar(struct client *c) {
   int wstr_len = snprintf(buf, sizeof(buf), " %s ", wname);
   write(STDOUT_FILENO, buf, wstr_len);
 
+  // 计算窗口名称的显示宽度（中文字符占2列）
+  unsigned int wname_display_width = 2; // 两边的空格
+  const unsigned char *p = (const unsigned char *)wname;
+  while (*p) {
+    if (*p >= 0x80) {
+      // UTF-8 多字节字符，跳过后续字节
+      if ((*p & 0xE0) == 0xC0) { p += 2; wname_display_width += 1; }
+      else if ((*p & 0xF0) == 0xE0) { p += 3; wname_display_width += 2; }
+      else if ((*p & 0xF8) == 0xF0) { p += 4; wname_display_width += 2; }
+      else { p++; wname_display_width += 1; }
+    } else {
+      p++;
+      wname_display_width++;
+    }
+  }
+
+  int history_display_width = 0;
   if (c->pane->grid->scroll_offset) {
-    int hstr_len = snprintf(buf, sizeof(buf), "[history]");
+    const char *history_str = TR(MSG_STATUS_HISTORY);
+    int hstr_len = snprintf(buf, sizeof(buf), "%s", history_str);
     write(STDOUT_FILENO, buf, hstr_len);
+    // 计算历史标签的显示宽度
+    p = (const unsigned char *)history_str;
+    while (*p) {
+      if (*p >= 0x80) {
+        if ((*p & 0xE0) == 0xC0) { p += 2; history_display_width += 1; }
+        else if ((*p & 0xF0) == 0xE0) { p += 3; history_display_width += 2; }
+        else if ((*p & 0xF8) == 0xF0) { p += 4; history_display_width += 2; }
+        else { p++; history_display_width += 1; }
+      } else {
+        p++;
+        history_display_width++;
+      }
+    }
   }
 
   // 用空格填满整行
-  for (unsigned int i = strlen(buf); i < cols; i++) {
-    int vstr_len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
+  int vstr_len = snprintf(buf, sizeof(buf), "%s", MINI_TMUX_VERSION_STRING);
+  unsigned int used_width = wname_display_width + history_display_width;
 
-    if (i >= cols - 1 - vstr_len && !c->pane->grid->scroll_offset) {
-      write(STDOUT_FILENO, buf, vstr_len);
-      write(STDOUT_FILENO, " ", 1);
-      break;
-    } else if (i >= cols - 1 - wstr_len - vstr_len &&
-               c->pane->grid->scroll_offset) {
+  for (unsigned int i = used_width; i < cols; i++) {
+    if (i >= cols - 1 - vstr_len) {
       write(STDOUT_FILENO, buf, vstr_len);
       write(STDOUT_FILENO, " ", 1);
       break;

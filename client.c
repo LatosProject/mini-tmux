@@ -4,6 +4,7 @@
 #include "window.h"
 #define _GNU_SOURCE
 #include "client.h"
+#include "i18n.h"
 #include "input.h"
 #include "keyboard.h"
 #include "log.h"
@@ -584,8 +585,7 @@ int client_main(struct client *c) {
     int pane_count = 0;
     if (read(server_fd, &pane_count, sizeof(int)) <= 0 || pane_count <= 0) {
       char buff[MINI_TMUX_BUF_SMALL] = {0};
-      snprintf(buff, sizeof(buff),
-               "attach failed: session %d not found or not detached\n",
+      snprintf(buff, sizeof(buff), TR(MSG_ATTACH_FAILED),
                detached_session_id);
       write(STDOUT_FILENO, buff, strlen(buff));
       log_warn("attach failed: session %d not found or not detached",
@@ -596,7 +596,7 @@ int client_main(struct client *c) {
     log_info("attaching to session with %d panes", pane_count);
 
     // 创建 window
-    w = window_create("Attached Window");
+    w = window_create(TR(MSG_WINDOW_ATTACHED));
     c->ws.ws_row -= 1;
 
     // 计算每个 pane 的宽度
@@ -684,8 +684,8 @@ int client_main(struct client *c) {
   } else {
     // 不允许嵌套运行
     if (client_check_nested()) {
-      char buff[MINI_TMUX_BUF_SMALL] = "sessions should be nested with care\n";
-      write(STDOUT_FILENO, buff, strlen(buff));
+      const char *msg = TR(MSG_NESTED_WARNING);
+      write(STDOUT_FILENO, msg, strlen(msg));
       _exit(-1);
     }
     // 创建新session
@@ -701,7 +701,7 @@ int client_main(struct client *c) {
       log_error("recv_fd failed");
       return -1;
     }
-    struct window *w = window_create("New Window");
+    struct window *w = window_create(TR(MSG_WINDOW_NEW));
     c->ws.ws_row -= 1;
     c->pane = pane_create(w, c->ws.ws_col, c->ws.ws_row, 0, 0);
     pane_set_master_fd(c->pane, c->master_fd);

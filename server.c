@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 700
 #include "server.h"
 #include "client.h"
+#include "i18n.h"
 #include "list.h"
 #include "log.h"
 #include "main.h"
@@ -133,7 +134,7 @@ int server_receive(int fd) {
     }
 
     if (count == 0) {
-      snprintf(response, sizeof(response), "(no sessions)\n");
+      snprintf(response, sizeof(response), "%s", TR(MSG_NO_SESSIONS));
     }
 
     size_t len = strlen(response) + 1;
@@ -170,10 +171,10 @@ int server_receive(int fd) {
       // 从链表中删除
       list_del(&target->link);
       free(target);
-      snprintf(response, sizeof(response), "killed session %d\n", session_id);
+      snprintf(response, sizeof(response), TR(MSG_SESSION_KILLED), session_id);
     } else {
       log_warn("kill-session failed: session %d not found", session_id);
-      snprintf(response, sizeof(response), "session %d not found\n",
+      snprintf(response, sizeof(response), TR(MSG_SESSION_NOT_FOUND),
                session_id);
     }
 
