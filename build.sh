@@ -3,7 +3,7 @@
 
 set -e
 
-VERSION="0.3.2"
+VERSION="0.4.3"
 BUILD_DIR="build"
 
 # 显示帮助

@@ -32,6 +32,7 @@ void next_pane(struct client *c) {
     next = list_entry(c->pane->window->panes.next, struct window_pane, link);
   }
   c->pane = next;
+  render_pane(c->pane);
 }
 void scroll_up(struct client *c) {
   if (c->pane && c->pane->grid) {
