@@ -43,10 +43,12 @@ struct environ_entry *environ_find(const char *name,
 }
 
 int client_check_nested() {
-  struct environ_entry out;
-  struct environ_entry *envent = environ_find("MINI_TMUX", &out);
+  struct environ_entry out1, out2;
+  struct environ_entry *envent = environ_find("MINI_TMUX", &out1);
+  struct environ_entry *tmux = environ_find("TMUX", &out2);
 
-  if (envent == NULL || envent->value == NULL || *envent->value == '\0')
+  if ((tmux == NULL || tmux->value == NULL || *tmux->value == '\0') &&
+      (envent == NULL || envent->value == NULL || *envent->value == '\0'))
     return (0);
   return (1);
 }
