@@ -7,6 +7,10 @@ add_compile_definitions(_DEFAULT_SOURCE)
 if(NOT DEFINED TARGET_ARCH)
     execute_process(COMMAND uname -m OUTPUT_VARIABLE TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
+# Debug 构建时启用日志
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DENABLE_LOG)
+endif()
 
 # 架构名称映射
 if(TARGET_ARCH STREQUAL "x86_64")
@@ -35,8 +39,12 @@ set(VTERM_SOURCES
 
 set(SOURCES main.c client.c spawn.c util.c server.c log.c window.c render.c input.c)
 
-# 设置输出文件名：mini-tmux-版本-架构
-set(OUTPUT_NAME "mini-tmux-${PROJECT_VERSION}-${ARCH_NAME}")
+# 设置输出文件名：mini-tmux-版本-架构[-debug]
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(OUTPUT_NAME "mini-tmux-${PROJECT_VERSION}-${ARCH_NAME}-debug")
+else()
+    set(OUTPUT_NAME "mini-tmux-${PROJECT_VERSION}-${ARCH_NAME}")
+endif()
 add_executable(${OUTPUT_NAME} ${SOURCES} ${VTERM_SOURCES})
 target_include_directories(${OUTPUT_NAME} PRIVATE vendor/vterm)
 
