@@ -1,13 +1,16 @@
+#include "keyboard.h"
 #include "client.h"
 #include "log.h"
+#include "main.h"
 #include "render.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
 #define MAX_KEYBINDS 16
 extern char *socket_path;
-enum key_table { KEY_PREFIX };
+
 struct keybind {
   char key;
   enum key_table table;
@@ -77,7 +80,7 @@ void keybind_init() {
   keybinds[keybind_count++] = (struct keybind){']', KEY_PREFIX, scroll_down};
 
   // tmp/mini-tmux-1000/default -> /tmp/mini-tmux-1000/
-  char dirpath[512];
+  char dirpath[MINI_TMUX_BUF_PATH];
   strncpy(dirpath, socket_path, sizeof(dirpath) - 1);
   dirpath[sizeof(dirpath) - 1] = '\0';
   char *last_slash = strrchr(dirpath, '/');
@@ -85,7 +88,7 @@ void keybind_init() {
     *(last_slash + 1) = '\0';
   }
 
-  char filename[512];
+  char filename[MINI_TMUX_BUF_PATH];
   snprintf(filename, sizeof(filename), "%skeybinds.conf", dirpath);
   log_debug("keybinds config: %s", filename);
   FILE *fp = fopen(filename, "r");

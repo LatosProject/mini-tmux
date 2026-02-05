@@ -1,4 +1,5 @@
 #include "render.h"
+#include "main.h"
 #include "window.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -39,7 +40,7 @@ void sync_vterm_from_grid(struct window_pane *p) {
     return;
 
   struct grid *g = p->grid;
-  char seq[64];
+  char seq[MINI_TMUX_INPUT_SEQ];
   int len;
 
   // 清屏并重置状态

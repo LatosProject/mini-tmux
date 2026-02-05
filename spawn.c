@@ -1,4 +1,5 @@
 #include "server.h"
+#include "main.h"
 #include "util.h"
 #include <fcntl.h>
 #include <stdio.h>
@@ -41,7 +42,7 @@ pid_t spawn_child(struct session *s) {
 
     setenv("TERM", "xterm-256color", 1);
 
-    char buf[100];
+    char buf[MINI_TMUX_BUF_SMALL];
     snprintf(buf, sizeof(buf), "%d", s->slave_pid);
     setenv("MINI_TMUX", buf, 1);
 

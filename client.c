@@ -5,7 +5,7 @@
 #define _GNU_SOURCE
 #include "client.h"
 #include "input.h"
-#include "keyboard.c"
+#include "keyboard.h"
 #include "log.h"
 #include "main.h"
 #include "server.h"
@@ -87,7 +87,7 @@ static int client_connect(const char *path) {
   struct sockaddr_un sa;
   int fd, lockfd = -1;
   int locked = 0;
-  char buf[100] = {0};
+  char buf[MINI_TMUX_BUF_SMALL] = {0};
   char *lockfile = NULL;
 
   // 将一段内存全部设置为指定的字节值
@@ -215,27 +215,26 @@ void act_child_exit(struct client *c, client_event ev) {
 void act_enable_raw_mode(struct client *c, client_event ev) {
   // 原始终端切换至 raw 模式
   tcgetattr(STDIN_FILENO, &(c->raw));
-  c->raw.c_lflag &= ~(ECHO | ICANON | ISIG); // 关掉回显/ 立即读取 / 禁用SIGINT
+  c->raw.c_lflag &= ~(ECHO | ICANON | ISIG); // 关掉回显、立即读取、禁用SIGINT
   c->raw.c_iflag &=
       ~ICRNL; // 禁用 CR->NL 转换，否则 Enter(\r) 会变成 \n (Ctrl+J)
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &(c->raw));
 }
 
 void act_pty_read(struct client *c, client_event ev) {
-  char buff[4096];
+  char buff[MINI_TMUX_BUF_XLARGE];
   ssize_t n = read(c->master_fd, buff, sizeof(buff));
   if (n <= 0) {
     dispatch_event(c, EV_EOF_PTY);
     return;
   }
-  // write(STDOUT_FILENO, buff, n);
   pane_input(c->pane, buff, n);
   render_status_bar(c);
   render_pane(c->pane);
 }
 
 void act_stdin_read(struct client *c, client_event ev) {
-  char buff[4096];
+  char buff[MINI_TMUX_BUF_XLARGE];
   ssize_t n = read(STDIN_FILENO, buff, sizeof(buff));
   if (n <= 0) {
     dispatch_event(c, EV_EOF_STDIN);
@@ -273,7 +272,6 @@ void act_stdin_read(struct client *c, client_event ev) {
 }
 
 void act_detach(struct client *c, client_event ev) {
-  void *buf;
   struct window_pane *p;
   list_for_each_entry(p, &c->pane->window->panes, link) {
     void *buf;
@@ -296,14 +294,14 @@ void act_detach(struct client *c, client_event ev) {
 void signal_handler(int sig) {
   extern struct client client;
   int status;
-  int ret;
+  pid_t ret;
   switch (sig) {
   case SIGWINCH:
     sigwinch_pending = 1;
     break;
   // 回收子进程
   case SIGCHLD:
-    // ret = waitpid(client.slave_pid, &status, WNOHANG);
+    ret = waitpid(client.slave_pid, &status, WNOHANG);
     if (ret > 0) {
       sigchld_pending = 1;
     }
@@ -330,7 +328,7 @@ void act_pane_split(struct client *c, client_event ev) {
   struct winsize new_ws = {.ws_row = total_height, .ws_col = pane_width};
   send_server(MSG_RESIZE, server_fd, &new_ws, sizeof(new_ws));
 
-  char buf[100] = "pane-split";
+  char buf[MINI_TMUX_BUF_SMALL] = "pane-split";
   send_server(MSG_COMMAND, server_fd, buf, strlen(buf) + 1);
   int new_fd = recv_fd(server_fd);
   if (new_fd == -1) {
@@ -390,7 +388,6 @@ void client_loop(struct client *c) {
     int maxfd;
     FD_ZERO(&rfds);
 
-    // FD_SET(c->master_fd, &rfds);
     FD_SET(STDIN_FILENO, &rfds);
     FD_SET(c->server_fd, &rfds); // 监听 server 连接
 
@@ -444,7 +441,7 @@ void client_loop(struct client *c) {
       int pane_removed = 0;
       list_for_each_entry_safe(p, tmp, &c->pane->window->panes, link) {
         if (p->master_fd >= 0 && FD_ISSET(p->master_fd, &rfds)) {
-          char buff[4096];
+          char buff[MINI_TMUX_BUF_XLARGE];
           ssize_t n = read(p->master_fd, buff, sizeof(buff));
           if (n > 0) {
             pane_input(p, buff, n);
@@ -586,7 +583,7 @@ int client_main(struct client *c) {
     // attach: 先读取 pane 数量
     int pane_count = 0;
     if (read(server_fd, &pane_count, sizeof(int)) <= 0 || pane_count <= 0) {
-      char buff[100] = {0};
+      char buff[MINI_TMUX_BUF_SMALL] = {0};
       snprintf(buff, sizeof(buff),
                "attach failed: session %d not found or not detached\n",
                detached_session_id);
@@ -687,12 +684,12 @@ int client_main(struct client *c) {
   } else {
     // 不允许嵌套运行
     if (client_check_nested()) {
-      char buff[100] = "sessions should be nested with care\n";
+      char buff[MINI_TMUX_BUF_SMALL] = "sessions should be nested with care\n";
       write(STDOUT_FILENO, buff, strlen(buff));
       _exit(-1);
     }
     // 创建新session
-    char buf[100] = "new-session";
+    char buf[MINI_TMUX_BUF_SMALL] = "new-session";
     struct winsize ws_pty = c->ws;
     ws_pty.ws_row -= 1;
     send_server(MSG_RESIZE, server_fd, &ws_pty, sizeof(ws_pty));
@@ -743,7 +740,7 @@ int client_main(struct client *c) {
   log_info("entering client loop");
   client_loop(c);
 
-  char buf[100];
+  char buf[MINI_TMUX_BUF_SMALL];
   memset(buf, 0, sizeof(buf));
   snprintf(buf, sizeof(buf), "%d", c->slave_pid);
   send_server(MSG_EXITED, server_fd, buf, strlen(buf) + 1);

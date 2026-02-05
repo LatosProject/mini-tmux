@@ -1,6 +1,7 @@
 #include "render.h"
 #include "client.h"
 #include "list.h"
+#include "main.h"
 #include "version.h"
 #include "window.h"
 #include <limits.h>
@@ -137,7 +138,6 @@ void render_pane(struct window_pane *p) {
       continue;
     }
     for (unsigned int x = 0; x < p->sx;) {
-      // struct cell *c = &g->cells[y * g->width + x];
       struct cell *c = &line[x];
 
       // 检查是否需要更新颜色/属性
@@ -201,7 +201,7 @@ void render_pane(struct window_pane *p) {
   }
 }
 void render_status_bar(struct client *c) {
-  char buf[256];
+  char buf[MINI_TMUX_BUF_MEDIUM];
   unsigned int row = c->ws.ws_row + 1; // 最后一行
   unsigned int cols = c->ws.ws_col;
   write(STDOUT_FILENO, CURSOR_HIDE, 6);
@@ -251,7 +251,7 @@ void render_status_bar(struct client *c) {
 }
 void render_pane_borders(struct window_pane *p) {
   write(STDOUT_FILENO, CURSOR_HIDE, 6);
-  char buf[256];
+  char buf[MINI_TMUX_BUF_MEDIUM];
   for (unsigned int y = 0; y < p->sy; y++) {
     int len = snprintf(buf, sizeof(buf), "\033[%u;%uH\033[34m│\033[0m",
                        p->yoff + y + 1, p->xoff + p->sx + 1);

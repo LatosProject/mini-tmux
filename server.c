@@ -117,7 +117,7 @@ int server_receive(int fd) {
 
   // MSG_LIST_SESSIONS 不需要创建 session，直接处理
   if (hdr.type == MSG_LIST_SESSIONS) {
-    char response[4096] = {0};
+    char response[MINI_TMUX_BUF_XLARGE] = {0};
     int offset = 0;
     struct session *s;
     int count = 0;
@@ -147,7 +147,7 @@ int server_receive(int fd) {
 
   // MSG_DETACHKILL: 杀死指定 session
   if (hdr.type == MSG_DETACHKILL) {
-    char response[256] = {0};
+    char response[MINI_TMUX_BUF_MEDIUM] = {0};
     int session_id;
     memcpy(&session_id, buf, sizeof(session_id));
 
@@ -549,7 +549,7 @@ int server_start() {
   log_debug("bound to %s", socket_path);
 
   // 监听客户端连接
-  if (listen(listen_fd, 5) == -1) {
+  if (listen(listen_fd, MINI_TMUX_LISTEN_BACKLOG) == -1) {
     log_error("listen failed: %s", strerror(errno));
     close(listen_fd);
     return -1;
@@ -627,7 +627,7 @@ int server_start() {
     open("/dev/null", O_RDONLY); // stdin  -> fd 0
     open("/dev/null", O_WRONLY); // stdout -> fd 1
     open("/dev/null", O_WRONLY); // stderr -> fd 2
-                                 //
+
     // 恢复信号掩码
     sigprocmask(SIG_SETMASK, &oldset, NULL);
 

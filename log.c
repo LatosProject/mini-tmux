@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "log.h"
+#include "main.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +19,7 @@ void log_init(const char *name) {
 
   // 从 socket_path 提取目录，创建日志文件
   if (socket_path) {
-    char log_path[256];
+    char log_path[MINI_TMUX_BUF_MEDIUM];
     char *last_slash = strrchr(socket_path, '/');
     if (last_slash) {
       size_t dir_len = last_slash - socket_path;
@@ -59,14 +60,14 @@ void log_write(log_level_t level, const char *file, int line, const char *fmt,
   base = base ? base + 1 : file;
 
   // 格式化用户消息
-  char msg[1024];
+  char msg[MINI_TMUX_BUF_LARGE];
   va_list args;
   va_start(args, fmt);
   vsnprintf(msg, sizeof(msg), fmt, args);
   va_end(args);
 
   // 完整日志行
-  char log_line[1280];
+  char log_line[MINI_TMUX_BUF_LARGE + MINI_TMUX_BUF_MEDIUM];
   snprintf(log_line, sizeof(log_line), "[%s] [%s] [%s:%d] %s\n", time_buf,
            level_names[level], base, line, msg);
 

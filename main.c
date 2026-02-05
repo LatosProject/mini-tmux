@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   uid_t uid = getuid();
 
   // 创建目录
-  char dir[100] = {0};
+  char dir[MINI_TMUX_BUF_SMALL] = {0};
   snprintf(dir, sizeof(dir), "%smini-tmux-%d", MINI_TMUX_SOCK, uid);
   if (mkdir(dir, 0700) != 0 && errno != EEXIST) {
     perror("mkdir failed");
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   }
 
   // socket_path 指向目录内的文件
-  static char buf[100] = {0};
+  static char buf[MINI_TMUX_BUF_SMALL] = {0};
   snprintf(buf, sizeof(buf), "%s/default", dir);
   socket_path = buf;
   client_init(&client);
